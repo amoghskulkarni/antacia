@@ -87,7 +87,6 @@ def _place_tokens(terrains: tuple[Terrain, ...], start_corner: int) -> tuple[int
 
 
 # Rulebook starting board, rows top to bottom (HexId order).
-# VERIFY: transcribed from memory; compare with the rulebook picture.
 _BEGINNER_TERRAINS = (
     (Terrain.MOUNTAINS, Terrain.PASTURE, Terrain.FOREST)
     + (Terrain.FIELDS, Terrain.HILLS, Terrain.PASTURE, Terrain.HILLS)
@@ -99,7 +98,12 @@ _BEGINNER_TOKENS: tuple[int | None, ...] = (
     (10, 2, 9) + (12, 6, 4, 10) + (9, 11, None, 3, 8) + (8, 3, 4, 5) + (5, 6, 11)
 )
 # VERIFY: placeholder, not the rulebook's beginner harbor assignment.
-_BEGINNER_HARBORS = HARBOR_TILES
+_BEGINNER_HARBORS = (
+    (Harbor.GENERIC, Harbor.GRAIN)
+    + (Harbor.LUMBER, Harbor.ORE)
+    + (Harbor.BRICK, Harbor.GENERIC)
+    + (Harbor.GENERIC, Harbor.GENERIC, Harbor.WOOL)
+)
 
 
 def generate_board(layout: Layout, rng: Rng) -> tuple[Board, Rng]:
