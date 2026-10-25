@@ -35,6 +35,17 @@ class Terrain(IntEnum):
     DESERT = 5  # produces nothing
 
 
+class Harbor(IntEnum):
+    """Harbor tile type. 2:1 harbors share their value with the matching Resource."""
+
+    BRICK = 0
+    LUMBER = 1
+    ORE = 2
+    GRAIN = 3
+    WOOL = 4
+    GENERIC = 5  # 3:1, any resource
+
+
 class DevCard(IntEnum):
     KNIGHT = 0
     VICTORY_POINT = 1
