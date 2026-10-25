@@ -257,14 +257,14 @@ The positions along the coast are a repeating gap pattern of 3, 3, 4 edges. **Th
 ```python
 from engine import topology as t
 
-h = t.HEX_ID[(0, 0)]                      # coordinates to id: 9
-t.HEXES[h]                                # id to coordinates: (0, 0)
+h = t.HEX_ID[(0, 0)]  # coordinates to id: 9
+t.HEXES[h]  # id to coordinates: (0, 0)
 
-t.HEX_VERTICES[h]                         # all 6 settlement spots of a hex
-t.VERTEX_HEXES[v]                         # hexes that produce for vertex v
-t.VERTEX_VERTICES[v]                      # for the distance rule
-t.VERTEX_EDGES[v]                         # roads touching a settlement
-t.EDGE_VERTICES[e]                        # both ends of a road
+t.HEX_VERTICES[h]  # all 6 settlement spots of a hex
+t.VERTEX_HEXES[v]  # hexes that produce for vertex v
+t.VERTEX_VERTICES[v]  # for the distance rule
+t.VERTEX_EDGES[v]  # roads touching a settlement
+t.EDGE_VERTICES[e]  # both ends of a road
 
 # distance rule: a vertex is free if it and all its neighbours are empty
 free = all(not occupied[u] for u in (v, *t.VERTEX_VERTICES[v]))
