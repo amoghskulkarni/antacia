@@ -1,7 +1,7 @@
 # General architecture 
 
 ```
-TRAINING / EVALUATION (local, your RTX 3080)
+TRAINING / EVALUATION (local, RTX 3080)
  ┌──────────────┐   obs/mask   ┌─────────────┐  step()  ┌──────────┐
  │ RL trainer   │◄────────────►│  Gym env    │◄────────►│ Engine   │
  │ (PPO, league)│   actions    │ (wrapper)   │          │ (rules)  │
@@ -41,7 +41,7 @@ LIVE PLAY (cloud, CPU/small GPU)           │
 | Chat/LLM layer | Banter, parsing trade talk into protocol messages.                                                                | Later phase, attached to the server               |
 | Postgres       | Accounts, games, replays.                                                                                         | Hosting phase                                     |
 
-## Repo layout (Phase 1)
+## Repo structure (Phase 1)
 
 ```
 antacia/
@@ -62,10 +62,14 @@ antacia/
 ├── bots/                      # random, greedy, heuristic
 ├── eval/                      # tournament + Elo/TrueSkill harness
 ├── tests/
-│   ├── unit/  property/
+│   ├── unit/
+│   ├── property/
 │   └── conformance/           # JSON golden replays (shared with future Rust port)
-├── server/  web/              # stubs until Phase 3/4
-├── .claude/commands/  .claude/agents/
+├── server/                    # stubs until Phase 3/4
+├── web/                       # stubs until Phase 3/4
+├── .claude/
+|   ├── unit/commands/  
+|   └── agents/
 └── pyproject.toml             # uv + ruff + mypy + pytest + hypothesis
 ```
 
