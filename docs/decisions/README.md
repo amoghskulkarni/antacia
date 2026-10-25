@@ -14,6 +14,10 @@ One ADR per decision that is costly to reverse or likely to be questioned. Open 
 | 0008 | Dense board ids and topology tables            | Accepted | Row-major int ids; topology precomputed as immutable tuples; layout separate     |
 | 0009 | Board layout generation and harbors            | Accepted | Beginner or random; official spiral tokens; shuffled harbor types               |
 | 0010 | Seeded RNG for chance events                   | Accepted | SplitMix64 state in `GameState`; dev cards drawn on demand; never observed      |
+| 0011 | Setup placements reuse the build actions       | Accepted | `BuildSettlement`/`BuildRoad` in setup; the phase decides cost and legality      |
+| 0012 | Robber move and steal as one action            | Accepted | `MoveRobber(hex, victim)`; victim `None` only if nobody can be robbed            |
+| 0013 | Discards after a 7, one card per action        | Accepted | `DiscardOne(resource)` repeated until the player has discarded enough            |
+| 0014 | Trade offers are broadcast (no targeted offers)| Accepted | `Offer(give, want)` goes to all opponents; audience comes with the chat layer    |
 
 ## ADR Template
 

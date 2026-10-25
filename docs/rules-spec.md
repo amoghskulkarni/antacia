@@ -14,7 +14,8 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 ## 2. Setup phase
 - [ ] Placement order (snake order) and which settlement grants starting resources
 - [ ] Distance rule
-- [ ] Beginner vs random layout (decision: ?)
+- [x] Beginner vs random layout (decision: both; `random` is the default, see ADR 0009)
+- Encoding: setup placements use `BuildSettlement`/`BuildRoad`; the phase makes them free (ADR 0011)
 
 ## 3. Turn structure
 - [ ] Order of phases: (optional dev card) -> roll -> production -> (trade/build/dev card in any order) -> end turn
@@ -25,6 +26,7 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 - [ ] Discard rule (threshold, how many, who chooses)
 - [ ] Robber movement and stealing (who can be stolen from, random card)
 - [ ] Knight card interaction
+- Encoding: discards are one `DiscardOne(resource)` per card (ADR 0013); move + steal is one `MoveRobber(hex, victim)` (ADR 0012)
 
 ## 5. Building
 - [ ] Costs (road, settlement, city, development card)
@@ -45,6 +47,7 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 - [ ] Domestic trade: who may trade with whom (only the active player with others?), who may trade with the bank
 - [ ] Maritime trade ratios (4:1, 3:1, 2:1) and when harbors apply
 - [ ] Are counter-offers allowed under the rulebook? (project decision: see trade-protocol.md)
+- Encoding: offers are broadcast to all opponents; no targeted offers yet (ADR 0014)
 - [ ] Can a player trade or build after rolling in any order?
 
 ## 9. Winning
