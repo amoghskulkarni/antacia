@@ -7,5 +7,5 @@ layout (terrains, number tokens, harbors) varies with the seed.
 Rules: docs/rules-spec.md sections 1 (components) and 2 (layout).
 """
 
-# TODO(ADR): choose the hex coordinate system (axial / cube / offset) before
-# adding any types here. This is the first Week 1 decision.
+# TODO: implement once ADRs 0007 (coordinates), 0008 (ids and topology) and
+# 0009 (layout generation) are Accepted.

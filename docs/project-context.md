@@ -63,8 +63,8 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 ## Phase 1 plan (10-12 hrs/week)
 | Week | Focus | Done when |
 |---|---|---|
-| 0 | Repo skeleton, uv, ruff/mypy/pytest CI, CLAUDE.md, fill rules-spec.md, pick name + license | CI green; spec sections 1-3 filled |
-| 1 | Board geometry, adjacency, harbors, seeded board generation | ASCII board printer; geometry property tests |
+| 0 | Repo skeleton, uv, ruff/mypy/pytest CI, CLAUDE.md, action dataclasses, board + RNG ADRs (0007-0010), fill rules-spec.md, pick name + license | CI green; spec sections 1-3 filled; ADRs 0007-0010 Accepted |
+| 1 | Implement ADRs 0007-0010: board geometry, adjacency, harbors, seeded RNG and board generation | ASCII board printer; geometry and RNG property tests |
 | 2 | GameState + setup phase | Random agent completes setup legally |
 | 3 | Dice, production, building, robber, 7-discard | Full no-trade, no-dev-card random game finishes |
 | 4 | Dev cards, Longest Road, Largest Army, win detection | Edge-case tests pass; invariants hold |
@@ -75,5 +75,4 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 ## Open questions
 - Final project name and license (MIT / Apache-2.0 / GPL).
 - Exact bounds for the RL trade subset and max negotiation rounds per turn.
-- Hex coordinate system for the board (first Week 1 decision).
-- RNG generator for chance events (Week 1 ADR): must be cheap to copy, portable bit-for-bit to Rust, independent of Python's `random`.
+- Board and RNG decisions: drafted as ADRs 0007-0010 (Proposed), to be reviewed in Week 0.
