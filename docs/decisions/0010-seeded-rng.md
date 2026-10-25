@@ -1,11 +1,11 @@
 # 0010: Seeded RNG for chance events
 
-Status: Proposed (2026-10-25). Review and mark Accepted or revise.
+Status: Accepted (2026-10-25)
 
 ## Context
 Chance enters through board generation, dice rolls, dev-card draws and robber steals. The engine must be deterministic given `(seed, actions)` (ADR 0002), carry its RNG inside the immutable `GameState` (copied on every step), and be reproducible bit-for-bit in Rust (ADR 0001). Search bots (ISMCTS, Phase 5) branch from states and must not be able to "see" future chance outcomes.
 
-## Decision (recommended)
+## Decision
 - **Generator: SplitMix64**, with the state as one 64-bit integer stored in `GameState`. Each draw adds a constant and runs a fixed mixing function. In Python every operation is masked with `& 0xFFFF_FFFF_FFFF_FFFF`; in Rust it uses `wrapping_add`/`wrapping_mul`.
 - **Pure interface:** `next_u64(rng) -> (value, rng)`, plus helpers built only on it:
   - `randbelow(rng, n)`: unbiased integer in `[0, n)` by rejection sampling, with the exact algorithm written down in `rng.py` so Rust matches it.
@@ -16,7 +16,7 @@ Chance enters through board generation, dice rolls, dev-card draws and robber st
 - **Seed input:** a Python `int` reduced to 64 bits; the replay log stores it.
 
 ## Options considered
-- **SplitMix64 (recommended):** 64-bit state, a few lines of code, statistically good enough for games (passes BigCrush), trivially ported, cheap to copy.
+- **SplitMix64 (chosen):** 64-bit state, a few lines of code, statistically good enough for games (passes BigCrush), trivially ported, cheap to copy.
 - **PCG32:** better-studied quality, also a 64-bit state, slightly more code. A fine alternative if SplitMix64 ever proves weak.
 - **xoshiro256\*\*:** excellent quality, but a 256-bit state (four ints to copy each step) for no practical gain here.
 - **Python `random.Random` (Mersenne Twister):** in the stdlib, but about 2.5 KB of state to copy on every step, and `randrange`/`shuffle` internals would have to be re-implemented exactly in Rust.
