@@ -76,3 +76,4 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 - Final project name and license (MIT / Apache-2.0 / GPL).
 - Exact bounds for the RL trade subset and max negotiation rounds per turn.
 - Hex coordinate system for the board (first Week 1 decision).
+- RNG generator for chance events (Week 1 ADR): must be cheap to copy, portable bit-for-bit to Rust, independent of Python's `random`.

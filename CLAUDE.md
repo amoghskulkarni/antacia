@@ -22,6 +22,7 @@ Catan-compatible base-game platform (3-4 players, official rules): a determinist
 - Install: `uv sync`
 - Test: `uv run pytest -q`
 - Lint/format: `uv run ruff check . && uv run ruff format .`
+- Types: `uv run mypy engine` (strict)
 
 ## How we work together (important)
 The goal of this project is for me to learn, not just to ship. So:
