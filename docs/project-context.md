@@ -64,7 +64,7 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 | Week | Focus | Done when |
 |---|---|---|
 | 0 | Repo skeleton, uv, ruff/mypy/pytest CI, CLAUDE.md, action dataclasses, board + RNG ADRs (0007-0010), fill rules-spec.md, pick name + license | CI green; spec sections 1-3 filled; ADRs 0007-0010 Accepted |
-| 1 | Implement ADRs 0007-0010: board geometry, adjacency, harbors, seeded RNG and board generation | ASCII board printer; geometry and RNG property tests |
+| 1 | Implement ADRs 0007-0010: board geometry, adjacency, harbors, seeded RNG and board generation (done early, in Week 0) | ASCII board printer; geometry and RNG property tests |
 | 2 | GameState + setup phase | Random agent completes setup legally |
 | 3 | Dice, production, building, robber, 7-discard | Full no-trade, no-dev-card random game finishes |
 | 4 | Dev cards, Longest Road, Largest Army, win detection | Edge-case tests pass; invariants hold |

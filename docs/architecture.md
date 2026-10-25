@@ -52,7 +52,8 @@ antacia/
 │   ├── architecture.md
 │   └── decisions/             # short ADRs (why Python first, Rust later, etc.)
 ├── engine/                    # python package
-│   ├── board.py               # hex/vertex/edge geometry, adjacency, ports
+│   ├── topology.py            # static geometry: coordinates, dense ids, adjacency, harbor slots
+│   ├── board.py               # per-game layout: terrains, tokens, harbors; ASCII printer
 │   ├── state.py               # GameState
 │   ├── actions.py             # action enum + encoding
 │   ├── rules/                 # setup, production, build, robber, devcards, trade, scoring

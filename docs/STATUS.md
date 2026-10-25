@@ -3,33 +3,33 @@
 Update at the end of every session. Keep it under ~40 lines.
 
 **Last updated:** 2026-10-25
-**Phase:** 1 (core engine), Week 0
+**Phase:** 1 (core engine), Week 0 (Week 1 board work pulled forward and done)
 
 ## Done
-- Planning complete: scope, architecture, tech choices (see `project-context.md`).
-- Docs drafted: `CLAUDE.md` (root and `engine/`), `rules-spec.md` skeleton, `trade-protocol.md`, `agent-roadmap.md`, ADRs 0001-0006.
-- Repo created under the name `antacia`.
-- `pyproject.toml` (uv, Python >=3.14, ruff, mypy strict on `engine/`, pytest, hypothesis) and `uv.lock`.
-- CI workflow `.github/workflows/ci.yml` (lint, format check, mypy, pytest). Passes locally; not yet run on GitHub.
-- Engine scaffold: public API stubs in `engine/game.py`, `types.py` enums, placeholder `GameState` and `Action`, `rules/` modules mapped to spec sections.
-- Tests scaffold: smoke tests, `property/` and `conformance/` READMEs. Nested `CLAUDE.md` in `tests/` and `engine/rules/`.
-- Action dataclasses in `engine/actions.py` (19 kinds), plus `ResourceCounts`, `Offer` and board id aliases in `types.py`. Decisions: setup reuses `BuildSettlement`/`BuildRoad`; robber move + steal is one `MoveRobber(hex, victim)`; 7-discards are one card per `DiscardOne`; actions never name the actor; no targeted offers yet.
-- ADRs 0007-0010 drafted (Proposed): hex coordinates, board ids/topology, layout generation, RNG.
+- Planning, docs, ADRs 0001-0006. Tooling: `pyproject.toml` (uv, Python >=3.14, ruff, mypy strict on `engine/`, pytest, hypothesis), CI workflow (passes locally; not yet run on GitHub).
+- Engine scaffold: API stubs in `engine/game.py`, `types.py` enums, placeholder `GameState`; nested `CLAUDE.md` in `tests/`, `engine/rules/`.
+- Actions: 19 frozen dataclasses in `engine/actions.py`; `ResourceCounts`, `Offer`, board id aliases. Encodings recorded as ADRs 0011-0014 (setup reuses build actions, combined `MoveRobber`, `DiscardOne`, broadcast-only offers).
+- ADRs 0007-0010 Accepted and implemented:
+  - `engine/rng.py`: SplitMix64 (matches reference outputs), `randbelow`, `shuffle`, `roll_dice`.
+  - `engine/topology.py`: axial coordinates, row-major ids (19/54/72), adjacency tables, coast ring, 9 harbor slots; pinned by `tests/conformance/topology.json`.
+  - `engine/board.py`: beginner + random layouts, A-R spiral tokens, shuffled harbors, `render_board` ASCII printer.
+- `trade-protocol.md` aligned with the code (action names, `Offer` without proposer, counters from the responder's side).
 
 ## Now (Week 0)
 1. Push and confirm CI is green on GitHub.
-2. Review ADRs 0007-0010 one by one; mark Accepted or revise. Resolve their `VERIFY` items (0009) against the rulebook.
-3. Fill `docs/rules-spec.md` sections 1-3 from the official rulebook; resolve the `VERIFY` items.
-4. Check the `VERIFY` items in `docs/trade-protocol.md` against the rulebook. Section 2 says `Offer(proposer, ...)`; the code leaves the proposer implicit.
+2. VERIFY against the rulebook: beginner terrains/tokens and harbor types (`engine/board.py`), harbor slot positions (`engine/topology.py`), spiral direction (counterclockwise). Run `render_board` to compare.
+3. Fill `docs/rules-spec.md` sections 1-3; resolve the `VERIFY` items.
+4. Check the `VERIFY` items in `docs/trade-protocol.md` against the rulebook.
 5. Decide license (MIT / Apache-2.0 / GPL) and confirm the project name.
-6. Review ADRs 0004 and 0006 (status Proposed) and mark them Accepted or revise.
+6. Review ADRs 0004 and 0006 (status Proposed).
 
-## Next (Week 1)
-- Implement ADRs 0007-0010: coordinates, ids and topology tables, seeded RNG, board generation, ASCII printer.
+## Next (Week 2)
+- `GameState` fields + setup phase (snake order, distance rule, starting resources); random agent completes setup legally.
 
 ## Blocked / open questions
-- Targeted vs broadcast trade offers; sequential vs sealed responses (`trade-protocol.md` section 13).
+- Sequential vs sealed trade responses (`trade-protocol.md` section 13).
 - Defaults for `max_proposals_per_turn` and the RL trade-size cap.
+- Discard order between players after a 7 (`rules-spec.md` section 4, ADR 0013).
 
 ## Pointers (Do not preload)
 - Roadmap and decisions: `docs/project-context.md`
