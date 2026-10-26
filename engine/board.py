@@ -164,3 +164,55 @@ def render_board(board: Board) -> str:
         side = _SIDE_NAMES[t.hex_sides(t.HEXES[h]).index(t.EDGES[edge])]
         lines.append(f"harbor {slot}: hex {h:>2} {side:<2} side  {_harbor_label(harbor)}")
     return "\n".join(lines)
+
+
+_MAP_COLS = 8  # characters per x half-unit
+_MAP_ROWS = 4  # lines per y half-unit
+
+
+def render_topology() -> str:
+    """Draw the static board with every hex (H), vertex (v) and edge (e) id at its true position.
+
+    Debugging aid for the numbering of ADR 0008. Each hex shows its id and axial
+    (q, r); each edge label sits on its edge, joined to its endpoints by strokes.
+    Positions come from `topology.*_POS`, so the picture is the numbering, not a
+    separate description of it.
+    """
+    cells: dict[tuple[int, int], str] = {}
+
+    def put(line: int, col: int, text: str) -> None:
+        for i, ch in enumerate(text):
+            cells[(line, col - len(text) // 2 + i)] = ch
+
+    # Strokes first, so labels overwrite them.
+    for e in range(t.NUM_EDGES):
+        (x1, y1), (x2, y2) = sorted((t.VERTEX_POS[v] for v in t.EDGE_VERTICES[e]), key=_by_row)
+        top, bottom = y1 * _MAP_ROWS, y2 * _MAP_ROWS
+        mid = (top + bottom) // 2
+        stroke = "|" if x1 == x2 else ("/" if x2 < x1 else "\\")
+        c1, c2 = x1 * _MAP_COLS, x2 * _MAP_COLS
+        for line in range(top + 1, bottom):
+            if line != mid:
+                put(line, c1 + (c2 - c1) * (line - top) // (bottom - top), stroke)
+
+    for e, (x, y) in enumerate(t.EDGE_POS):  # twice the midpoint
+        put(y * _MAP_ROWS // 2, x * _MAP_COLS // 2, f"e{e}")
+    for v, (x, y) in enumerate(t.VERTEX_POS):
+        put(y * _MAP_ROWS, x * _MAP_COLS, f"v{v}")
+    for h, (x, y) in enumerate(t.HEX_POS):
+        q, r = t.HEXES[h]
+        put(y * _MAP_ROWS - 1, x * _MAP_COLS, f"H{h}")
+        put(y * _MAP_ROWS + 1, x * _MAP_COLS, f"({q},{r})")
+
+    first_line = min(line for line, _ in cells)
+    last_line = max(line for line, _ in cells)
+    first_col = min(col for _, col in cells)
+    last_col = max(col for _, col in cells)
+    return "\n".join(
+        "".join(cells.get((line, col), " ") for col in range(first_col, last_col + 1)).rstrip()
+        for line in range(first_line, last_line + 1)
+    )
+
+
+def _by_row(p: t.Point) -> tuple[int, int]:
+    return (p[1], p[0])

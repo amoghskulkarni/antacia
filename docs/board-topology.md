@@ -278,6 +278,7 @@ Other ready-made things:
 - `engine.board.render_board(board)`: ASCII picture of a layout.
 
 ## 10. Gotchas
+- `engine.board.render_topology()`: ASCII map with every hex (`H`), vertex (`v`) and edge (`e`) id drawn at its true position. Use it to find an id or to check a change to the numbering.
 
 - **`r` grows downward.** This is screen convention, not maths convention. Anything "up" has a smaller `r`.
 - **`DIRECTIONS` is counterclockwise on screen** (E, NE, NW, W, SW, SE), but `hex_corners` and `hex_sides` go **clockwise**. They are different lists for different jobs.
