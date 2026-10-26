@@ -10,6 +10,7 @@ Pure game rules. This is the single source of truth for the server, the Gym env,
 - **Trades:** only the active player initiates, only during their own turn. Follow `docs/trade-protocol.md`. (ADR 0003)
 - **Python-only idioms stay out** of the engine core (no dynamic attribute tricks, no reliance on dict ordering for game logic), because a Rust port must reproduce it exactly. (ADR 0001)
 - **Equivariant under board symmetries (ADR 0015):** never break a tie or order an outcome by hex, vertex or edge id, and never use harbor slot ids outside board generation (use `vertex_harbors`). Turning or mirroring the board must give the same game. See `docs/board-symmetry.md`.
+- **Validate before indexing symmetry tables:** `HEX_SYMMETRIES` and friends are plain tuples, so `table[-1]` silently means symmetry 11. Use `transform_board`/`transform_action`/`apply_symmetry`, or call `t.check_symmetry(s)` earlier in the same function and index the table directly. CI enforces this (`tests/unit/test_symmetry_index_guard.py`). Use `# symmetry-ok: <reason>` only when the index is safe for another reason.
 - **Chance is explicit:** dice and card draws come from the seeded RNG passed through the state, never from a global.
 
 ## Interfaces the engine must provide

@@ -211,6 +211,10 @@ COAST: tuple[EdgeId, ...] = _walk_coast()
 #   s = 0..5:   rotate by 60 * s degrees counterclockwise (on screen)
 #   s = 6..11:  mirror left-right, then rotate by 60 * (s - 6) degrees
 # Tables are indexed [s][id] -> id of the image.
+#
+# WARNING: these are plain tuples, so table[-1] silently means symmetry 11.
+# Call check_symmetry(s) before indexing in the same function (CI enforces it,
+# tests/unit/test_symmetry_index_guard.py), or use engine.symmetry / apply_symmetry.
 
 NUM_SYMMETRIES = 12
 

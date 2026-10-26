@@ -38,6 +38,7 @@ So under a rigid reading of the rules, only 3 of the 12 images of a generated bo
 - Bad: `Board` has an extra field; 18 edges can now hold a harbor, so code must not assume the frame-0 edges. Augmented games cannot be replayed from a seed alone (the seed always deals frame 0); the replay format (Week 6) must be able to start from an explicit board and RNG state.
 - Training: actions and masks must be transformed with the board; transforming only the board teaches the model wrong moves. Real games (frame 0, counterclockwise) cover 3 of the 12 orientations; the other 9 appear only in augmented data. Because the game is identical, this costs model capacity, not correctness.
 - The equivariance rule (decision 8) constrains future rule code, and its property test is the safety net.
+- The symmetry tables are plain tuples, so `table[-1]` silently means symmetry 11. Public functions validate `s` with `check_symmetry` and raise `ValueError`; code that indexes a table directly must call `check_symmetry` first in the same function. A source-scanning test enforces this convention (`tests/unit/test_symmetry_index_guard.py`); a validating wrapper type was rejected as slower and less direct to port to Rust.
 
 ## Revisit when
 - An expansion or a 5-6 player board brings a different board shape or harbor frame.

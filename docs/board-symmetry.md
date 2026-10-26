@@ -140,6 +140,11 @@ Unchanged: all ids, the adjacency tables, and `generate_board`. Every seed still
 
 The x12 decision changed the public surface in three places: `engine.topology`, `engine.board` and the new `engine.symmetry`. Nothing else in the engine is affected yet.
 
+> **Never index a symmetry table with an `s` that has not been validated.**
+> `HEX_SYMMETRIES`, `VERTEX_SYMMETRIES`, `EDGE_SYMMETRIES` and `INVERSE_SYMMETRY` are plain tuples, so `table[-1]` silently means symmetry 11 and `table[-12]` symmetry 0, with no error. Prefer `transform_board`, `transform_action` and `apply_symmetry`, which validate for you. If you must index a table yourself, call `check_symmetry(s)` **first, in the same function**, and index the table directly (`t.HEX_SYMMETRIES[s]`), not through an alias.
+>
+> This is enforced by a test, not by the language: see "How it is enforced" below.
+
 ### Breaking changes
 
 | area | before | after | what to do |
@@ -194,10 +199,21 @@ Both are pure: they return new values and never modify their arguments. Both rai
 
 ### Gotchas
 
-- **Valid `s` is 0 to 11.** `transform_board`, `transform_action` and `apply_symmetry` raise `ValueError` for anything else (negative, 12 or more, or not an `int`). **Indexing the tables directly is unchecked:** `HEX_SYMMETRIES[-1]` silently means symmetry 11, because they are plain tuples. When `s` comes from outside the engine, call `check_symmetry(s)` first.
+- **Valid `s` is 0 to 11.** `transform_board`, `transform_action` and `apply_symmetry` raise `ValueError` for anything else (negative, 12 or more, or not an `int`). **Indexing the tables directly is unchecked by Python:** `HEX_SYMMETRIES[-1]` silently means symmetry 11, because they are plain tuples. So a test fails CI whenever a function indexes a table without calling `check_symmetry` first (next subsection).
 - **Transform board and actions together.** `transform_board(b, s)` with untransformed actions describes a different, usually illegal, game.
 - **A transformed board has `frame` 0 or 1.** Code that reads `board.harbors[i]` as "the harbor on `HARBOR_FRAMES[0][i]`" is only right for frame 0; use `vertex_harbors` or `HARBOR_FRAMES[board.frame]`.
 - **`Board` does not validate itself.** `Board(..., frame=5)` is accepted and fails later with `IndexError` in `vertex_harbors`.
+
+### How it is enforced
+
+Python cannot make `table[s]` validate `s` while the tables stay plain tuples (a validating wrapper class would cost speed and make the Rust port less direct). So `tests/unit/test_symmetry_index_guard.py` checks the source code instead. It parses every non-test `.py` file and fails if, **inside any function**:
+
+1. a table is used in any way other than a direct subscript (`table = t.HEX_SYMMETRIES`, `list(t.HEX_SYMMETRIES)` and `for t in (HEX_SYMMETRIES, ...)` all fail, because aliasing hides the index from the check); or
+2. a table is subscripted before a call to `check_symmetry` has appeared in that function (earlier in the function, or inside the subscript itself, as in `t.HEX_SYMMETRIES[t.check_symmetry(s)]`).
+
+Allowed without a check: module-level code (that is how the tables are built), and a line carrying `# symmetry-ok: <reason>` when the index is safe for another reason, for example `for s in range(NUM_SYMMETRIES)`. Always give the reason.
+
+What it does **not** check: that the validated value is the one you then index with (`check_symmetry(a)` followed by `TABLE[b]` passes), or code that reaches the tables dynamically (`getattr`, `globals()`). It is a convention check that makes the safe path the easy one, not a proof. Reviewers should still look at any direct table indexing.
 
 ### Migrating a caller
 
@@ -250,6 +266,7 @@ Planned next (when the types exist): `transform_state` (Week 2), and observation
 
 ## 10. Rules for engine code
 
+- **Call `check_symmetry(s)` before indexing a symmetry table, in the same function, and index the table directly** (CI-enforced, see section 7). Better: use `transform_board` / `transform_action` / `apply_symmetry`, which already do. This matters most when `s` comes from outside the engine: a random augmentation draw, a config value, a replay file.
 - **Never break a tie or order an outcome by hex, vertex or edge id.** If a rule picks "the first vertex" or iterates ids to decide something, the turned board would play out differently and equivariance breaks. Order by player or by explicit rule instead.
 - **Never use slot ids outside board generation.** Use `vertex_harbors`.
 - **Transform actions together with the board.** Transforming only the board (or only the observation) silently teaches a bot the wrong moves.
@@ -264,6 +281,8 @@ Planned next (when the types exist): `transform_state` (Week 2), and observation
 - `s = 1` is a counterclockwise 60° rotation, `s = 6` negates every x position, `s = 6..11` are mirror-then-rotate, and inverses undo;
 - the two frames, the slot formulas from section 4, and `HARBOR_SLOT_OF_EDGE`;
 - `transform_board` moves terrains, tokens and per-vertex harbors with the symmetry and round-trips through the inverse; `transform_action` moves only board locations.
+
+`tests/unit/test_symmetry_index_guard.py` enforces the `check_symmetry` convention on the whole codebase (section 7), with self-tests for the checker and a check that it fails when the guard is removed from `engine/symmetry.py`.
 
 `tests/property/test_symmetry_properties.py` checks, over random seeds and symmetries, that transformed boards keep every component, never put red numbers side by side, keep harbors on the transformed vertices, and that transforming twice equals transforming once by the composition. `tests/conformance/topology.json` pins all symmetry tables and both frames.
 
