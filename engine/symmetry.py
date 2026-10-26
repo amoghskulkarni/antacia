@@ -43,8 +43,11 @@ from engine.types import Harbor, Terrain
 
 
 def transform_board(board: Board, s: int) -> Board:
-    """The same board seen under symmetry `s`: hex h's tile moves to HEX_SYMMETRIES[s][h]."""
-    hexes = t.HEX_SYMMETRIES[s]
+    """The same board seen under symmetry `s`: hex h's tile moves to HEX_SYMMETRIES[s][h].
+
+    Raises ValueError unless `s` is an int in 0..11.
+    """
+    hexes = t.HEX_SYMMETRIES[t.check_symmetry(s)]
     terrains: list[Terrain] = [Terrain.DESERT] * t.NUM_HEXES
     tokens: list[int | None] = [None] * t.NUM_HEXES
     for h in range(t.NUM_HEXES):
@@ -64,7 +67,11 @@ def transform_board(board: Board, s: int) -> Board:
 
 
 def transform_action(action: Action, s: int) -> Action:
-    """The same action under symmetry `s`: board locations move, everything else stays."""
+    """The same action under symmetry `s`: board locations move, everything else stays.
+
+    Raises ValueError unless `s` is an int in 0..11, even for actions no symmetry changes.
+    """
+    t.check_symmetry(s)
     match action:
         case BuildRoad(edge=e):
             return BuildRoad(edge=t.EDGE_SYMMETRIES[s][e])

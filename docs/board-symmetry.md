@@ -163,7 +163,8 @@ The x12 decision changed the public surface in three places: `engine.topology`, 
 | `HEX_SYMMETRIES`, `VERTEX_SYMMETRIES`, `EDGE_SYMMETRIES` | `tuple[tuple[int, ...], ...]` | `TABLE[s][id]` is where `id` goes under symmetry `s` |
 | `INVERSE_SYMMETRY` | `tuple[int, ...]` | `INVERSE_SYMMETRY[s]` undoes `s` |
 | `rotate_hex(h)`, `mirror_hex(h)` | `Hex -> Hex` | one 60-degree counterclockwise rotation, or the left-right mirror, of axial coordinates |
-| `apply_symmetry(s, h)` | `(int, Hex) -> Hex` | symmetry `s` applied to hex coordinates (land or sea) |
+| `apply_symmetry(s, h)` | `(int, Hex) -> Hex` | symmetry `s` applied to hex coordinates (land or sea); `ValueError` if `s` is invalid |
+| `check_symmetry(s)` | `int -> int` | returns `s` if it is an `int` in 0..11, otherwise raises `ValueError`; the single check behind every function that takes `s` |
 | `HARBOR_FRAMES` | `tuple[tuple[EdgeId, ...], ...]` | `HARBOR_FRAMES[f][i]` is the edge of slot `i` in frame `f` |
 | `HARBOR_SLOT_OF_EDGE` | `Mapping[EdgeId, tuple[int, int]]` | edge id to `(frame, slot)`, for the 18 edges that can hold a harbor |
 
@@ -181,7 +182,7 @@ The x12 decision changed the public surface in three places: `engine.topology`, 
 | `transform_board(board, s) -> Board` | the same board under symmetry `s`: tiles and tokens move with their hexes, harbors move with their vertices, and `frame` switches if the symmetry maps frame 0 to frame 1 |
 | `transform_action(action, s) -> Action` | the same action under symmetry `s`: `BuildRoad`, `BuildSettlement`, `BuildCity` and `MoveRobber.hex` are relabelled; every other action (and `MoveRobber.victim`) is returned unchanged, as the same object |
 
-Both are pure: they return new values and never modify their arguments.
+Both are pure: they return new values and never modify their arguments. Both raise `ValueError` unless `s` is an `int` in 0..11, before doing anything else; `transform_action` checks even for actions that no symmetry would change (`transform_action(EndTurn(), 12)` raises).
 
 ### Guarantees you can rely on
 
@@ -189,10 +190,11 @@ Both are pure: they return new values and never modify their arguments.
 - Transforming by `a` then by `b` equals transforming once by the symmetry that is `a` followed by `b` (tables compose: `TABLE[b][TABLE[a][x]]`).
 - Adjacency is preserved: if two vertices are neighbours, their images are neighbours; likewise for hexes, edges and every incidence table.
 - `transform_board(b, 0) == b`, and `transform_action(a, 0) == a`.
+- An invalid `s` never produces a result: it is an error, not a different symmetry.
 
 ### Gotchas
 
-- **Valid `s` is 0 to 11.** `s = 12` or more raises `IndexError`, but a **negative `s` silently wraps** (`-1` acts like `11`), because the tables are tuples. Always pass `0 <= s < NUM_SYMMETRIES`.
+- **Valid `s` is 0 to 11.** `transform_board`, `transform_action` and `apply_symmetry` raise `ValueError` for anything else (negative, 12 or more, or not an `int`). **Indexing the tables directly is unchecked:** `HEX_SYMMETRIES[-1]` silently means symmetry 11, because they are plain tuples. When `s` comes from outside the engine, call `check_symmetry(s)` first.
 - **Transform board and actions together.** `transform_board(b, s)` with untransformed actions describes a different, usually illegal, game.
 - **A transformed board has `frame` 0 or 1.** Code that reads `board.harbors[i]` as "the harbor on `HARBOR_FRAMES[0][i]`" is only right for frame 0; use `vertex_harbors` or `HARBOR_FRAMES[board.frame]`.
 - **`Board` does not validate itself.** `Board(..., frame=5)` is accepted and fails later with `IndexError` in `vertex_harbors`.

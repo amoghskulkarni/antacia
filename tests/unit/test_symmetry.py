@@ -190,3 +190,38 @@ def test_transform_action_inverse_round_trips(s: int) -> None:
         image = transform_action(action, s)
         assert transform_action(image, t.INVERSE_SYMMETRY[s]) == action
         assert dataclasses.is_dataclass(image)
+
+
+# --- Invalid symmetry indices -----------------------------------------------
+
+BAD_SYMMETRIES = [-1, -12, 12, 13, 100]
+
+
+@pytest.mark.parametrize("s", BAD_SYMMETRIES)
+def test_out_of_range_symmetry_is_rejected_everywhere(s: int) -> None:
+    board, _ = generate_board(Layout.BEGINNER, seed_rng(0))
+    with pytest.raises(ValueError, match=str(s)):
+        transform_board(board, s)
+    with pytest.raises(ValueError, match=str(s)):
+        t.apply_symmetry(s, (0, 0))
+    # Even actions that no symmetry would change must not accept a bad index.
+    for action in (BuildRoad(edge=3), MoveRobber(hex=4, victim=None), EndTurn()):
+        with pytest.raises(ValueError, match=str(s)):
+            transform_action(action, s)
+
+
+@pytest.mark.parametrize("s", [0.0, 1.5, "3", None])
+def test_non_integer_symmetry_is_rejected(s: object) -> None:
+    board, _ = generate_board(Layout.BEGINNER, seed_rng(0))
+    with pytest.raises(ValueError):
+        transform_board(board, s)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        transform_action(EndTurn(), s)  # type: ignore[arg-type]
+
+
+def test_every_valid_symmetry_is_still_accepted() -> None:
+    board, _ = generate_board(Layout.BEGINNER, seed_rng(0))
+    for s in SYMS:
+        transform_board(board, s)
+        transform_action(EndTurn(), s)
+        t.apply_symmetry(s, (0, 0))

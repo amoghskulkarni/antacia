@@ -215,6 +215,17 @@ COAST: tuple[EdgeId, ...] = _walk_coast()
 NUM_SYMMETRIES = 12
 
 
+def check_symmetry(s: int) -> int:
+    """Return `s` if it is a symmetry index (an int in 0..11), else raise ValueError.
+
+    Without this, tuple indexing would silently accept negative indices (`-1` acts
+    like `11`), and `apply_symmetry` would treat `12` like `6`.
+    """
+    if not isinstance(s, int) or not 0 <= s < NUM_SYMMETRIES:
+        raise ValueError(f"symmetry must be an int in 0..{NUM_SYMMETRIES - 1}, got {s!r}")
+    return s
+
+
 def rotate_hex(h: Hex) -> Hex:
     """Rotate 60 degrees counterclockwise about the centre: cube (q, r, s) -> (-s, -q, -r)."""
     q, r = h
@@ -228,7 +239,8 @@ def mirror_hex(h: Hex) -> Hex:
 
 
 def apply_symmetry(s: int, h: Hex) -> Hex:
-    """Image of hex coordinates `h` (land or sea) under symmetry `s`."""
+    """Image of hex coordinates `h` (land or sea) under symmetry `s` (0..11, else ValueError)."""
+    check_symmetry(s)
     if s >= 6:
         h = mirror_hex(h)
     for _ in range(s % 6):
