@@ -9,7 +9,7 @@ Each game needs a layout: a terrain per hex, a number token per non-desert hex, 
 - **Config option `layout: "beginner" | "random"`, default `random`.** `beginner` is the rulebook's fixed starting board, stored as data.
 - **Random terrains:** shuffle the 19 terrain tiles over the 19 hexes with the seeded RNG (ADR 0010).
 - **Number tokens, official method (verified):** place the tokens in the rulebook's lettered order A-R (5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11) along a counterclockwise spiral from a randomly chosen outer corner hex towards the centre, skipping the desert. Property tests check that red numbers (6, 8) never end up on adjacent hexes.
-- **Harbors (verified): 9 fixed coastal slots, each slot one coastal edge (its two vertices get the harbor); random mode shuffles the 9 harbor tiles (4 generic 3:1, one 2:1 per resource) over the slots.** The slot edges are data in `engine/topology.py` (`HARBOR_SLOTS`, verified with `render_topology()`).
+- **Harbors (verified): 9 fixed coastal slots, each slot one coastal edge (its two vertices get the harbor); random mode shuffles the 9 harbor tiles (4 generic 3:1, one 2:1 per resource) over the slots.** The slot edges are data in `engine/topology.py` (`HARBOR_FRAMES[0]`, verified with `render_topology()`). Slot numbering, the second harbor frame and board symmetries: ADR 0015.
 - **The robber starts on the desert.**
 - **Generation is a pure function `generate_board(layout, rng) -> (Board, rng)`.** Its RNG draws come first in every game, in a fixed order (terrains, start corner, harbors), so the seed alone fixes the board. `beginner` draws nothing.
 - The whole layout is public and part of every observation.

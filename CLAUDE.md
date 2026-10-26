@@ -16,6 +16,7 @@ Catan-compatible base-game platform (3-4 players, official rules): a determinist
 - Why a decision was made: `docs/decisions/README.md` (index; open only the ADR you need)
 - Rules, source of truth: `docs/rules-spec.md`
 - Board geometry (coordinates, ids, adjacency tables): `docs/board-topology.md`
+- Board symmetries (rotations, mirrors, harbor frames, x12 augmentation): `docs/board-symmetry.md`
 - Trading protocol: `docs/trade-protocol.md`
 - Bots, search, LLM chat layer: `docs/agent-roadmap.md`
 

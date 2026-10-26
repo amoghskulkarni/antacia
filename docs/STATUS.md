@@ -13,6 +13,7 @@ Update at the end of every session. Keep it under ~40 lines.
   - `engine/rng.py`: SplitMix64 (matches reference outputs), `randbelow`, `shuffle`, `roll_dice`.
   - `engine/topology.py`: axial coordinates, row-major ids (19/54/72), adjacency tables, coast ring, 9 harbor slots; pinned by `tests/conformance/topology.json`.
   - `engine/board.py`: beginner + random layouts, A-R spiral tokens, shuffled harbors, `render_board` ASCII printer.
+- ADR 0015: all 12 board symmetries are legal boards. `topology.py` symmetry tables, two harbor frames (`HARBOR_FRAMES` replaces `HARBOR_SLOTS`), `Board.frame`, `vertex_harbors`, `engine/symmetry.py` (`transform_board`, `transform_action`). Docs: `docs/board-symmetry.md`.
 - `trade-protocol.md` aligned with the code (action names, `Offer` without proposer, counters from the responder's side).
 
 ## Now (Week 0)
@@ -25,6 +26,7 @@ Update at the end of every session. Keep it under ~40 lines.
 
 ## Next (Week 2)
 - `GameState` fields + setup phase (snake order, distance rule, starting resources); random agent completes setup legally.
+- `transform_state` and the equivariance property test for `step` / `legal_actions` (ADR 0015).
 
 ## Blocked / open questions
 - Sequential vs sealed trade responses (`trade-protocol.md` section 13).

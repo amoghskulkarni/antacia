@@ -54,6 +54,7 @@ antacia/
 ├── engine/                    # python package
 │   ├── topology.py            # static geometry: coordinates, dense ids, adjacency, harbor slots
 │   ├── board.py               # per-game layout: terrains, tokens, harbors; ASCII printer
+│   ├── symmetry.py            # the 12 board symmetries applied to boards and actions
 │   ├── state.py               # GameState
 │   ├── actions.py             # action enum + encoding
 │   ├── rules/                 # setup, production, build, robber, devcards, trade, scoring

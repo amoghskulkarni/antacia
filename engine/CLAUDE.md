@@ -9,6 +9,7 @@ Pure game rules. This is the single source of truth for the server, the Gym env,
 - **Official rules, strictly:** follow `docs/rules-spec.md`. If a rule is ambiguous, ask me; do not guess.
 - **Trades:** only the active player initiates, only during their own turn. Follow `docs/trade-protocol.md`. (ADR 0003)
 - **Python-only idioms stay out** of the engine core (no dynamic attribute tricks, no reliance on dict ordering for game logic), because a Rust port must reproduce it exactly. (ADR 0001)
+- **Equivariant under board symmetries (ADR 0015):** never break a tie or order an outcome by hex, vertex or edge id, and never use harbor slot ids outside board generation (use `vertex_harbors`). Turning or mirroring the board must give the same game. See `docs/board-symmetry.md`.
 - **Chance is explicit:** dice and card draws come from the seeded RNG passed through the state, never from a global.
 
 ## Interfaces the engine must provide

@@ -245,14 +245,14 @@ Edge 36 is the east side of the centre hex, named from its east neighbour (hex 1
 
 Hex neighbours by the same idea: hex 0 `(0, -2)` has only 3 land neighbours, `(1, 3, 4)`, because the other three offsets fall outside the board. The centre hex has all six: `(4, 5, 8, 10, 13, 14)`.
 
-## 8. The coast and harbor slots
+## 8. The coast and harbor frames
 
 - **`COAST`** is the ring of the 30 edges that border exactly one land hex, in clockwise order starting at the top-left. Consecutive edges share one vertex, and the last connects back to the first.
-- **`HARBOR_SLOTS`** are 9 fixed positions on the coast (slot ids 0..8, clockwise from the top left). Slot `i` is the edge `HARBOR_SLOTS[i]`; both endpoints of that edge get the harbor's trade ratio. The board layout (`Board.harbors[i]`) decides which harbor type sits on slot `i`.
+- **`HARBOR_FRAMES`** holds the two legal sets of 9 harbor edges (ADR 0015). `HARBOR_FRAMES[f][i]` is the edge of slot `i` in frame `f`; both endpoints of that edge get the harbor's trade ratio. `Board.frame` says which frame a board uses, and `Board.harbors[i]` the harbor type on slot `i`.
 
-The harbor edges are 0, 3, 17, 18, 38, 49, 61, 66 and 69 (18 harbor vertices: 0, 1, 3, 5, 10, 11, 15, 16, 26, 32, 33, 38, 42, 46, 47, 49, 51, 52), verified against the rulebook frame with `render_topology()`. In clockwise slot order that is 0, 3, 17, 38, 61, 69, 66, 49, 18: gaps of 3, 4, 3 coastal edges, repeated three times. Because slots run clockwise and the pattern repeats every third slot, a 120-degree rotation of the board maps slot `i` to slot `i + 3`.
+Frame 0 is the rulebook frame, verified with `render_topology()`: edges 0, 3, 17, 18, 38, 49, 61, 66 and 69 (harbor vertices 0, 1, 3, 5, 10, 11, 15, 16, 26, 32, 33, 38, 42, 46, 47, 49, 51, 52). Its slots run clockwise from edge 0: 0, 3, 17, 38, 61, 69, 66, 49, 18, at gaps of 3, 4, 3 coastal edges, repeated three times. Frame 1 is frame 0 turned by 60 degrees; it only appears on rotated or mirrored boards. Why there are two frames, and how symmetries move slots, is explained in `docs/board-symmetry.md`.
 
-The edges are stored as a set in `topology.py`, and the beginner harbor types as a mapping from edge to type in `board.py`, so neither depends on remembering the slot order.
+The frame-0 edges are stored as a set in `topology.py`, and the beginner harbor types as a mapping from edge to type in `board.py`, so neither depends on remembering the slot order. Rules look harbors up per vertex with `engine.board.vertex_harbors(board)`, never by slot.
 
 ## 9. Using the module
 
@@ -278,6 +278,7 @@ Other ready-made things:
 - `t.HEX_POS / VERTEX_POS / EDGE_POS`: positions by id (section 3).
 - `t.HEX_ID / VERTEX_ID / EDGE_ID`: read-only dicts from coordinates to ids.
 - `engine.board.render_board(board)`: ASCII picture of a layout.
+- `t.HEX_SYMMETRIES / VERTEX_SYMMETRIES / EDGE_SYMMETRIES`: the 12 rotations and mirror images as id permutations; see `docs/board-symmetry.md`.
 - `engine.board.render_topology()`: ASCII map with every hex (`H`), vertex (`v`) and edge (`e`) id drawn at its true position. Use it to find an id or to check a change to the numbering.
 
 ## 10. Gotchas
