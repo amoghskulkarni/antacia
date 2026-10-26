@@ -51,10 +51,26 @@ class Board:
     tokens: tuple[int | None, ...]
     """Number token per HexId; None on the desert."""
     harbors: tuple[Harbor, ...]
-    """Harbor type per slot; slot i sits on edge topology.HARBOR_SLOTS[i]."""
+    """Harbor type per slot; slot i sits on edge topology.HARBOR_FRAMES[frame][i]."""
+    frame: int
+    """Which harbor frame (0 or 1) the board uses (ADR 0015). Generated boards use 0;
+    boards transformed by a symmetry (engine/symmetry.py) can use either."""
 
     def desert(self) -> HexId:
         return self.terrains.index(Terrain.DESERT)
+
+
+def vertex_harbors(board: Board) -> tuple[Harbor | None, ...]:
+    """Harbor type per VertexId (None if the vertex has no harbor).
+
+    Rules and observations look harbors up here, never by slot id, so they work
+    the same for both frames and for every symmetry of the board.
+    """
+    harbors: list[Harbor | None] = [None] * t.NUM_VERTICES
+    for edge, harbor in zip(t.HARBOR_FRAMES[board.frame], board.harbors, strict=True):
+        for v in t.EDGE_VERTICES[edge]:
+            harbors[v] = harbor
+    return tuple(harbors)
 
 
 def spiral(start_corner: int) -> tuple[HexId, ...]:
@@ -109,7 +125,7 @@ _BEGINNER_HARBOR_BY_EDGE: dict[EdgeId, Harbor] = {
     66: Harbor.GENERIC,
     69: Harbor.GENERIC,
 }
-_BEGINNER_HARBORS = tuple(_BEGINNER_HARBOR_BY_EDGE[e] for e in t.HARBOR_SLOTS)
+_BEGINNER_HARBORS = tuple(_BEGINNER_HARBOR_BY_EDGE[e] for e in t.HARBOR_FRAMES[0])
 
 
 def generate_board(layout: Layout, rng: Rng) -> tuple[Board, Rng]:
@@ -117,13 +133,15 @@ def generate_board(layout: Layout, rng: Rng) -> tuple[Board, Rng]:
 
     `random` draws, in this order: terrain shuffle, spiral start corner,
     harbor shuffle. `beginner` draws nothing and returns `rng` unchanged.
+    Both use harbor frame 0 and the rulebook's counterclockwise spiral; the other
+    legal orientations come from `engine.symmetry.transform_board` (ADR 0015).
     """
     if layout is Layout.BEGINNER:
-        return Board(_BEGINNER_TERRAINS, _BEGINNER_TOKENS, _BEGINNER_HARBORS), rng
+        return Board(_BEGINNER_TERRAINS, _BEGINNER_TOKENS, _BEGINNER_HARBORS, frame=0), rng
     terrains, rng = shuffle(rng, TERRAIN_TILES)
     corner, rng = randbelow(rng, 6)
     harbors, rng = shuffle(rng, HARBOR_TILES)
-    return Board(terrains, _place_tokens(terrains, corner), harbors), rng
+    return Board(terrains, _place_tokens(terrains, corner), harbors, frame=0), rng
 
 
 def red_numbers_adjacent(board: Board) -> bool:
@@ -153,7 +171,7 @@ def _harbor_label(harbor: Harbor) -> str:
 
 
 def render_board(board: Board) -> str:
-    """Hex rows with terrain and token, then one line per harbor slot."""
+    """Hex rows with terrain and token, then the harbor frame and one line per slot."""
     lines: list[str] = []
     rows: dict[int, list[HexId]] = {}
     for h in range(t.NUM_HEXES):
@@ -165,7 +183,9 @@ def render_board(board: Board) -> str:
             cells.append(f"[{_TERRAIN_ABBR[board.terrains[h]]}{'' if token is None else token:>2}]")
         lines.append(" " * (3 * abs(r)) + "".join(cells))
     lines.append("")
-    for slot, (edge, harbor) in enumerate(zip(t.HARBOR_SLOTS, board.harbors, strict=True)):
+    lines.append(f"harbor frame {board.frame}")
+    frame = t.HARBOR_FRAMES[board.frame]
+    for slot, (edge, harbor) in enumerate(zip(frame, board.harbors, strict=True)):
         (h,) = t.EDGE_HEXES[edge]
         side = _SIDE_NAMES[t.hex_sides(t.HEXES[h]).index(t.EDGES[edge])]
         lines.append(f"harbor {slot}: hex {h:>2} {side:<2} side  {_harbor_label(harbor)}")

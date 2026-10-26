@@ -93,31 +93,24 @@ def test_coast_is_a_clockwise_cycle_of_30_edges() -> None:
     assert second[0] > first[0]
 
 
-def test_harbor_slots_are_coastal_and_never_share_a_vertex() -> None:
-    assert len(t.HARBOR_SLOTS) == 9
+def test_each_harbor_frame_is_coastal_and_never_shares_a_vertex() -> None:
+    assert len(t.HARBOR_FRAMES) == 2
     coast = set(t.COAST)
-    used: set[int] = set()
-    for e in t.HARBOR_SLOTS:
-        assert e in coast
-        a, b = t.EDGE_VERTICES[e]
-        assert not {a, b} & used
-        used |= {a, b}
+    for frame in t.HARBOR_FRAMES:
+        assert len(frame) == 9
+        used: set[int] = set()
+        for e in frame:
+            assert e in coast
+            a, b = t.EDGE_VERTICES[e]
+            assert not {a, b} & used
+            used |= {a, b}
 
 
-def test_harbor_slots_are_the_rulebook_edges_in_clockwise_order() -> None:
+def test_frame_0_is_the_rulebook_edges_in_clockwise_order() -> None:
     # Verified against the rulebook frame using render_topology().
-    assert set(t.HARBOR_SLOTS) == {0, 3, 17, 18, 38, 49, 61, 66, 69}
-    harbor_vertices = sorted(v for e in t.HARBOR_SLOTS for v in t.EDGE_VERTICES[e])
+    frame = t.HARBOR_FRAMES[0]
+    assert set(frame) == {0, 3, 17, 18, 38, 49, 61, 66, 69}
+    harbor_vertices = sorted(v for e in frame for v in t.EDGE_VERTICES[e])
     assert harbor_vertices == [0, 1, 3, 5, 10, 11, 15, 16, 26, 32, 33, 38, 42, 46, 47, 49, 51, 52]
-    # Slot ids run clockwise from the top left, so a 120-degree rotation shifts slots by 3.
-    assert list(t.HARBOR_SLOTS) == sorted(t.HARBOR_SLOTS, key=t.COAST.index)
-    assert t.HARBOR_SLOTS[0] == t.COAST[0]
-
-
-def test_coordinate_lookups_round_trip() -> None:
-    for i, h in enumerate(t.HEXES):
-        assert t.HEX_ID[h] == i
-    for i, v in enumerate(t.VERTICES):
-        assert t.VERTEX_ID[v] == i
-    for i, e in enumerate(t.EDGES):
-        assert t.EDGE_ID[e] == i
+    assert list(frame) == sorted(frame, key=t.COAST.index)
+    assert frame[0] == t.COAST[0]

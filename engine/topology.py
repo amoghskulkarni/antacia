@@ -175,7 +175,7 @@ EDGE_EDGES: tuple[tuple[EdgeId, ...], ...] = tuple(
 )
 
 
-# --- Coast and harbor slots -------------------------------------------------
+# --- Coast -----------------------------------------------------------------
 
 
 def _walk_coast() -> tuple[EdgeId, ...]:
@@ -203,9 +203,115 @@ def _walk_coast() -> tuple[EdgeId, ...]:
 
 COAST: tuple[EdgeId, ...] = _walk_coast()
 
-# The rulebook frame's harbor edges, verified with `render_topology()`. Along
-# COAST they sit at gaps of 3, 4, 3 edges, repeated three times.
-_HARBOR_EDGES: frozenset[EdgeId] = frozenset({0, 3, 17, 18, 38, 49, 61, 66, 69})
+# --- Board symmetries (ADR 0015) --------------------------------------------
+#
+# The board has 12 symmetries: 6 rotations and 6 mirror images. Each one is a
+# relabelling of ids that preserves every adjacency table, so the game played
+# on a transformed board is the same game. Symmetry `s` is:
+#   s = 0..5:   rotate by 60 * s degrees counterclockwise (on screen)
+#   s = 6..11:  mirror left-right, then rotate by 60 * (s - 6) degrees
+# Tables are indexed [s][id] -> id of the image.
 
-HARBOR_SLOTS: tuple[EdgeId, ...] = tuple(sorted(_HARBOR_EDGES, key=COAST.index))
-"""The 9 fixed harbor edges, in clockwise order from the top left (slot ids 0..8)."""
+NUM_SYMMETRIES = 12
+
+
+def rotate_hex(h: Hex) -> Hex:
+    """Rotate 60 degrees counterclockwise about the centre: cube (q, r, s) -> (-s, -q, -r)."""
+    q, r = h
+    return (q + r, -q)
+
+
+def mirror_hex(h: Hex) -> Hex:
+    """Mirror left-right about the vertical axis through the centre (x -> -x)."""
+    q, r = h
+    return (-q - r, r)
+
+
+def apply_symmetry(s: int, h: Hex) -> Hex:
+    """Image of hex coordinates `h` (land or sea) under symmetry `s`."""
+    if s >= 6:
+        h = mirror_hex(h)
+    for _ in range(s % 6):
+        h = rotate_hex(h)
+    return h
+
+
+def _vertex_hexes3(v: Vertex) -> frozenset[Hex]:
+    """The 3 hexes (land or sea) meeting at vertex `v`: a name-free identity for it."""
+    q, r, corner = v
+    if corner is Corner.N:
+        return frozenset({(q, r), (q, r - 1), (q + 1, r - 1)})
+    return frozenset({(q, r), (q - 1, r + 1), (q, r + 1)})
+
+
+def _edge_hexes2(e: Edge) -> frozenset[Hex]:
+    """The 2 hexes (land or sea) on either side of edge `e`."""
+    q, r, side = e
+    other = {Side.NE: (q + 1, r - 1), Side.NW: (q, r - 1), Side.W: (q - 1, r)}[side]
+    return frozenset({(q, r), other})
+
+
+def _symmetry_tables() -> tuple[
+    tuple[tuple[HexId, ...], ...],
+    tuple[tuple[VertexId, ...], ...],
+    tuple[tuple[EdgeId, ...], ...],
+]:
+    # Vertex and edge names are tied to an owning hex, so they don't transform
+    # directly; the sets of hexes around them do.
+    vertex_by_hexes = {_vertex_hexes3(v): i for i, v in enumerate(VERTICES)}
+    edge_by_hexes = {_edge_hexes2(e): i for i, e in enumerate(EDGES)}
+    hexes, vertices, edges = [], [], []
+    for s in range(NUM_SYMMETRIES):
+        hexes.append(tuple(HEX_ID[apply_symmetry(s, h)] for h in HEXES))
+        vertices.append(
+            tuple(
+                vertex_by_hexes[frozenset(apply_symmetry(s, h) for h in _vertex_hexes3(v))]
+                for v in VERTICES
+            )
+        )
+        edges.append(
+            tuple(
+                edge_by_hexes[frozenset(apply_symmetry(s, h) for h in _edge_hexes2(e))]
+                for e in EDGES
+            )
+        )
+    return tuple(hexes), tuple(vertices), tuple(edges)
+
+
+HEX_SYMMETRIES, VERTEX_SYMMETRIES, EDGE_SYMMETRIES = _symmetry_tables()
+
+INVERSE_SYMMETRY: tuple[int, ...] = tuple(
+    next(
+        b
+        for b in range(NUM_SYMMETRIES)
+        if all(HEX_SYMMETRIES[b][HEX_SYMMETRIES[a][h]] == h for h in range(NUM_HEXES))
+    )
+    for a in range(NUM_SYMMETRIES)
+)
+"""INVERSE_SYMMETRY[s] undoes symmetry s."""
+
+
+# --- Harbor frames (ADR 0015) -----------------------------------------------
+#
+# The rulebook frame has 9 harbor edges. Only 6 of the 12 symmetries keep them
+# in place; the other 6 move them to a second, disjoint set: the same frame
+# turned by 60 degrees. A legal board uses one of these two frames.
+
+_RULEBOOK_HARBOR_EDGES = frozenset({0, 3, 17, 18, 38, 49, 61, 66, 69})  # verified (ADR 0009)
+
+_FRAME_0 = tuple(sorted(_RULEBOOK_HARBOR_EDGES, key=COAST.index))
+
+HARBOR_FRAMES: tuple[tuple[EdgeId, ...], ...] = (
+    _FRAME_0,
+    tuple(EDGE_SYMMETRIES[1][e] for e in _FRAME_0),
+)
+"""HARBOR_FRAMES[f][i] is the edge of harbor slot i in frame f.
+
+Frame 0 is the rulebook frame, slots clockwise from edge 0. Frame 1 is frame 0
+rotated 60 degrees counterclockwise, slot by slot (also clockwise).
+"""
+
+HARBOR_SLOT_OF_EDGE: Mapping[EdgeId, tuple[int, int]] = MappingProxyType(
+    {e: (f, i) for f, frame in enumerate(HARBOR_FRAMES) for i, e in enumerate(frame)}
+)
+"""Edge id -> (frame, slot), for the 18 edges that can hold a harbor."""

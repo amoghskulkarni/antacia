@@ -93,7 +93,7 @@ def test_red_numbers_adjacent_detects_neighbouring_six_and_eight() -> None:
     b = t.HEX_NEIGHBORS[a][0]
     tokens = list(board.tokens)
     tokens[a], tokens[b] = 6, 8
-    assert red_numbers_adjacent(Board(board.terrains, tuple(tokens), board.harbors))
+    assert red_numbers_adjacent(Board(board.terrains, tuple(tokens), board.harbors, frame=0))
 
 
 def test_render_board_shows_rows_tokens_and_harbors() -> None:
@@ -103,7 +103,8 @@ def test_render_board_shows_rows_tokens_and_harbors() -> None:
     hex_rows = [line for line in lines if "[" in line]
     assert [row.count("[") for row in hex_rows] == [3, 4, 5, 4, 3]
     assert "[DE  ]" in text
-    assert sum(line.startswith("harbor ") for line in lines) == 9
+    assert "harbor frame 0" in lines
+    assert sum(line.startswith("harbor ") and ":" in line for line in lines) == 9
 
 
 def test_spiral_never_puts_red_numbers_side_by_side_for_any_desert_and_corner() -> None:
@@ -116,13 +117,13 @@ def test_spiral_never_puts_red_numbers_side_by_side_for_any_desert_and_corner() 
             Terrain.DESERT if h == desert else Terrain.FIELDS for h in range(t.NUM_HEXES)
         )
         for corner in range(6):
-            board = Board(terrains, _place_tokens(terrains, corner), HARBOR_TILES)
+            board = Board(terrains, _place_tokens(terrains, corner), HARBOR_TILES, frame=0)
             assert not red_numbers_adjacent(board), (desert, corner)
 
 
 def test_beginner_harbors_match_the_rulebook() -> None:
     board, _ = generate_board(Layout.BEGINNER, seed_rng(0))
-    by_edge = dict(zip(t.HARBOR_SLOTS, board.harbors, strict=True))
+    by_edge = dict(zip(t.HARBOR_FRAMES[0], board.harbors, strict=True))
     assert by_edge == {
         0: Harbor.GENERIC,
         3: Harbor.GRAIN,

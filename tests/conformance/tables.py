@@ -20,5 +20,9 @@ def topology_tables() -> dict[str, Any]:
         "edge_hexes": [list(x) for x in t.EDGE_HEXES],
         "edge_edges": [list(x) for x in t.EDGE_EDGES],
         "coast": list(t.COAST),
-        "harbor_slots": list(t.HARBOR_SLOTS),
+        "harbor_frames": [list(f) for f in t.HARBOR_FRAMES],
+        "hex_symmetries": [list(x) for x in t.HEX_SYMMETRIES],
+        "vertex_symmetries": [list(x) for x in t.VERTEX_SYMMETRIES],
+        "edge_symmetries": [list(x) for x in t.EDGE_SYMMETRIES],
+        "inverse_symmetry": list(t.INVERSE_SYMMETRY),
     }
