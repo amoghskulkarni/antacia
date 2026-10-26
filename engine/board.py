@@ -13,7 +13,7 @@ from enum import StrEnum
 
 from engine import topology as t
 from engine.rng import Rng, randbelow, shuffle
-from engine.types import Harbor, HexId, Terrain
+from engine.types import EdgeId, Harbor, HexId, Terrain
 
 
 class Layout(StrEnum):
@@ -97,13 +97,19 @@ _BEGINNER_TERRAINS = (
 _BEGINNER_TOKENS: tuple[int | None, ...] = (
     (10, 2, 9) + (12, 6, 4, 10) + (9, 11, None, 3, 8) + (8, 3, 4, 5) + (5, 6, 11)
 )
-# VERIFY: placeholder, not the rulebook's beginner harbor assignment.
-_BEGINNER_HARBORS = (
-    (Harbor.GENERIC, Harbor.GRAIN)
-    + (Harbor.LUMBER, Harbor.ORE)
-    + (Harbor.BRICK, Harbor.GENERIC)
-    + (Harbor.GENERIC, Harbor.GENERIC, Harbor.WOOL)
-)
+# Rulebook starting harbors, keyed by edge so the data doesn't depend on slot order.
+_BEGINNER_HARBOR_BY_EDGE: dict[EdgeId, Harbor] = {
+    0: Harbor.GENERIC,
+    3: Harbor.GRAIN,
+    17: Harbor.ORE,
+    18: Harbor.LUMBER,
+    38: Harbor.GENERIC,
+    49: Harbor.BRICK,
+    61: Harbor.WOOL,
+    66: Harbor.GENERIC,
+    69: Harbor.GENERIC,
+}
+_BEGINNER_HARBORS = tuple(_BEGINNER_HARBOR_BY_EDGE[e] for e in t.HARBOR_SLOTS)
 
 
 def generate_board(layout: Layout, rng: Rng) -> tuple[Board, Rng]:

@@ -250,7 +250,9 @@ Hex neighbours by the same idea: hex 0 `(0, -2)` has only 3 land neighbours, `(1
 - **`COAST`** is the ring of the 30 edges that border exactly one land hex, in clockwise order starting at the top-left. Consecutive edges share one vertex, and the last connects back to the first.
 - **`HARBOR_SLOTS`** are 9 fixed positions on the coast (slot ids 0..8, clockwise from the top left). Slot `i` is the edge `HARBOR_SLOTS[i]`; both endpoints of that edge get the harbor's trade ratio. The board layout (`Board.harbors[i]`) decides which harbor type sits on slot `i`.
 
-The positions along the coast are a repeating gap pattern of 3, 3, 4 edges. **The exact slot positions are marked VERIFY** until compared with the rulebook's frame (see `docs/STATUS.md`).
+The harbor edges are 0, 3, 17, 18, 38, 49, 61, 66 and 69 (18 harbor vertices: 0, 1, 3, 5, 10, 11, 15, 16, 26, 32, 33, 38, 42, 46, 47, 49, 51, 52), verified against the rulebook frame with `render_topology()`. In clockwise slot order that is 0, 3, 17, 38, 61, 69, 66, 49, 18: gaps of 3, 4, 3 coastal edges, repeated three times. Because slots run clockwise and the pattern repeats every third slot, a 120-degree rotation of the board maps slot `i` to slot `i + 3`.
+
+The edges are stored as a set in `topology.py`, and the beginner harbor types as a mapping from edge to type in `board.py`, so neither depends on remembering the slot order.
 
 ## 9. Using the module
 
@@ -276,9 +278,9 @@ Other ready-made things:
 - `t.HEX_POS / VERTEX_POS / EDGE_POS`: positions by id (section 3).
 - `t.HEX_ID / VERTEX_ID / EDGE_ID`: read-only dicts from coordinates to ids.
 - `engine.board.render_board(board)`: ASCII picture of a layout.
+- `engine.board.render_topology()`: ASCII map with every hex (`H`), vertex (`v`) and edge (`e`) id drawn at its true position. Use it to find an id or to check a change to the numbering.
 
 ## 10. Gotchas
-- `engine.board.render_topology()`: ASCII map with every hex (`H`), vertex (`v`) and edge (`e`) id drawn at its true position. Use it to find an id or to check a change to the numbering.
 
 - **`r` grows downward.** This is screen convention, not maths convention. Anything "up" has a smaller `r`.
 - **`DIRECTIONS` is counterclockwise on screen** (E, NE, NW, W, SW, SE), but `hex_corners` and `hex_sides` go **clockwise**. They are different lists for different jobs.

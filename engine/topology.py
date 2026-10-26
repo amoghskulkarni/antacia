@@ -203,10 +203,9 @@ def _walk_coast() -> tuple[EdgeId, ...]:
 
 COAST: tuple[EdgeId, ...] = _walk_coast()
 
-# Positions along COAST that hold a harbor: gaps of 3, 3, 4 repeated three times.
-# VERIFY: compare `render_board` output with the rulebook's frame before relying
-# on the exact slot positions.
-_HARBOR_COAST_INDICES = (0, 3, 6, 10, 13, 16, 20, 23, 26)
+# The rulebook frame's harbor edges, verified with `render_topology()`. Along
+# COAST they sit at gaps of 3, 4, 3 edges, repeated three times.
+_HARBOR_EDGES: frozenset[EdgeId] = frozenset({0, 3, 17, 18, 38, 49, 61, 66, 69})
 
-HARBOR_SLOTS: tuple[EdgeId, ...] = tuple(COAST[i] for i in _HARBOR_COAST_INDICES)
+HARBOR_SLOTS: tuple[EdgeId, ...] = tuple(sorted(_HARBOR_EDGES, key=COAST.index))
 """The 9 fixed harbor edges, in clockwise order from the top left (slot ids 0..8)."""

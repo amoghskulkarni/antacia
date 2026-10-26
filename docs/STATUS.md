@@ -17,7 +17,7 @@ Update at the end of every session. Keep it under ~40 lines.
 
 ## Now (Week 0)
 1. Push and confirm CI is green on GitHub.
-2. VERIFY against the rulebook: beginner terrains/tokens and harbor types (`engine/board.py`), harbor slot positions (`engine/topology.py`), spiral direction (counterclockwise). Run `render_board` to compare.
+2. VERIFY against the rulebook: spiral direction (counterclockwise). Beginner board, harbor slot edges and beginner harbor types are verified.
 3. Fill `docs/rules-spec.md` sections 1-3; resolve the `VERIFY` items.
 4. Check the `VERIFY` items in `docs/trade-protocol.md` against the rulebook.
 5. Decide license (MIT / Apache-2.0 / GPL) and confirm the project name.

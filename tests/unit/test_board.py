@@ -118,3 +118,19 @@ def test_spiral_never_puts_red_numbers_side_by_side_for_any_desert_and_corner() 
         for corner in range(6):
             board = Board(terrains, _place_tokens(terrains, corner), HARBOR_TILES)
             assert not red_numbers_adjacent(board), (desert, corner)
+
+
+def test_beginner_harbors_match_the_rulebook() -> None:
+    board, _ = generate_board(Layout.BEGINNER, seed_rng(0))
+    by_edge = dict(zip(t.HARBOR_SLOTS, board.harbors, strict=True))
+    assert by_edge == {
+        0: Harbor.GENERIC,
+        3: Harbor.GRAIN,
+        17: Harbor.ORE,
+        18: Harbor.LUMBER,
+        38: Harbor.GENERIC,
+        49: Harbor.BRICK,
+        61: Harbor.WOOL,
+        66: Harbor.GENERIC,
+        69: Harbor.GENERIC,
+    }

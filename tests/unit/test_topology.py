@@ -104,6 +104,16 @@ def test_harbor_slots_are_coastal_and_never_share_a_vertex() -> None:
         used |= {a, b}
 
 
+def test_harbor_slots_are_the_rulebook_edges_in_clockwise_order() -> None:
+    # Verified against the rulebook frame using render_topology().
+    assert set(t.HARBOR_SLOTS) == {0, 3, 17, 18, 38, 49, 61, 66, 69}
+    harbor_vertices = sorted(v for e in t.HARBOR_SLOTS for v in t.EDGE_VERTICES[e])
+    assert harbor_vertices == [0, 1, 3, 5, 10, 11, 15, 16, 26, 32, 33, 38, 42, 46, 47, 49, 51, 52]
+    # Slot ids run clockwise from the top left, so a 120-degree rotation shifts slots by 3.
+    assert list(t.HARBOR_SLOTS) == sorted(t.HARBOR_SLOTS, key=t.COAST.index)
+    assert t.HARBOR_SLOTS[0] == t.COAST[0]
+
+
 def test_coordinate_lookups_round_trip() -> None:
     for i, h in enumerate(t.HEXES):
         assert t.HEX_ID[h] == i
