@@ -136,7 +136,85 @@ Number tokens are dealt along a counterclockwise spiral (ADR 0009). Rotating a b
 
 Unchanged: all ids, the adjacency tables, and `generate_board`. Every seed still deals exactly the same board (frame 0), so nothing in the RNG order moved.
 
-## 7. Augmenting one game x12
+## 7. API changes
+
+The x12 decision changed the public surface in three places: `engine.topology`, `engine.board` and the new `engine.symmetry`. Nothing else in the engine is affected yet.
+
+### Breaking changes
+
+| area | before | after | what to do |
+|---|---|---|---|
+| `topology.HARBOR_SLOTS` | tuple of 9 edge ids | **removed** | use `topology.HARBOR_FRAMES[0]` for the rulebook frame, or `HARBOR_FRAMES[board.frame]` for a given board |
+| `Board(...)` | `Board(terrains, tokens, harbors)` | `Board(terrains, tokens, harbors, frame)`; `frame` is required, so the old call raises `TypeError` | pass `frame=0` for a freshly dealt board |
+| `tests/conformance/topology.json` | key `harbor_slots` | key `harbor_frames` (2 lists), plus `hex_symmetries`, `vertex_symmetries`, `edge_symmetries`, `inverse_symmetry` | `harbor_frames[0]` equals the old `harbor_slots`; no id table changed |
+| `render_board` output | harbor lines only | an extra `harbor frame N` line before the harbor lines | update any test that counts lines |
+
+### Unchanged
+
+- `generate_board(layout, rng) -> (Board, Rng)`: same signature, same RNG draws, same boards for every seed. The returned board has `frame == 0`.
+- All hex, vertex and edge ids, every adjacency table, `COAST`, and the meaning of `Board.harbors[i]` for a generated board (slot `i` of frame 0, which is the old slot `i`).
+- `Action` and every action dataclass. `transform_action` is a new function, not a change to them.
+
+### New: `engine.topology`
+
+| name | type | meaning |
+|---|---|---|
+| `NUM_SYMMETRIES` | `int` | 12 |
+| `HEX_SYMMETRIES`, `VERTEX_SYMMETRIES`, `EDGE_SYMMETRIES` | `tuple[tuple[int, ...], ...]` | `TABLE[s][id]` is where `id` goes under symmetry `s` |
+| `INVERSE_SYMMETRY` | `tuple[int, ...]` | `INVERSE_SYMMETRY[s]` undoes `s` |
+| `rotate_hex(h)`, `mirror_hex(h)` | `Hex -> Hex` | one 60-degree counterclockwise rotation, or the left-right mirror, of axial coordinates |
+| `apply_symmetry(s, h)` | `(int, Hex) -> Hex` | symmetry `s` applied to hex coordinates (land or sea) |
+| `HARBOR_FRAMES` | `tuple[tuple[EdgeId, ...], ...]` | `HARBOR_FRAMES[f][i]` is the edge of slot `i` in frame `f` |
+| `HARBOR_SLOT_OF_EDGE` | `Mapping[EdgeId, tuple[int, int]]` | edge id to `(frame, slot)`, for the 18 edges that can hold a harbor |
+
+### New: `engine.board`
+
+| name | meaning |
+|---|---|
+| `Board.frame: int` | which harbor frame (0 or 1) the board's `harbors` refer to |
+| `vertex_harbors(board) -> tuple[Harbor \| None, ...]` | the harbor type at each of the 54 vertices, or `None`; the way rules and observations should read harbors |
+
+### New: `engine.symmetry`
+
+| function | contract |
+|---|---|
+| `transform_board(board, s) -> Board` | the same board under symmetry `s`: tiles and tokens move with their hexes, harbors move with their vertices, and `frame` switches if the symmetry maps frame 0 to frame 1 |
+| `transform_action(action, s) -> Action` | the same action under symmetry `s`: `BuildRoad`, `BuildSettlement`, `BuildCity` and `MoveRobber.hex` are relabelled; every other action (and `MoveRobber.victim`) is returned unchanged, as the same object |
+
+Both are pure: they return new values and never modify their arguments.
+
+### Guarantees you can rely on
+
+- `transform_board(transform_board(b, s), INVERSE_SYMMETRY[s]) == b`, and the same for `transform_action`.
+- Transforming by `a` then by `b` equals transforming once by the symmetry that is `a` followed by `b` (tables compose: `TABLE[b][TABLE[a][x]]`).
+- Adjacency is preserved: if two vertices are neighbours, their images are neighbours; likewise for hexes, edges and every incidence table.
+- `transform_board(b, 0) == b`, and `transform_action(a, 0) == a`.
+
+### Gotchas
+
+- **Valid `s` is 0 to 11.** `s = 12` or more raises `IndexError`, but a **negative `s` silently wraps** (`-1` acts like `11`), because the tables are tuples. Always pass `0 <= s < NUM_SYMMETRIES`.
+- **Transform board and actions together.** `transform_board(b, s)` with untransformed actions describes a different, usually illegal, game.
+- **A transformed board has `frame` 0 or 1.** Code that reads `board.harbors[i]` as "the harbor on `HARBOR_FRAMES[0][i]`" is only right for frame 0; use `vertex_harbors` or `HARBOR_FRAMES[board.frame]`.
+- **`Board` does not validate itself.** `Board(..., frame=5)` is accepted and fails later with `IndexError` in `vertex_harbors`.
+
+### Migrating a caller
+
+```python
+# before
+for slot, edge in enumerate(topology.HARBOR_SLOTS):
+    harbor = board.harbors[slot]
+
+# after: read harbors per vertex, valid for both frames
+harbors = vertex_harbors(board)
+if harbors[vertex] is not None:
+    ...
+
+# after: if you really need the slot view
+for slot, edge in enumerate(topology.HARBOR_FRAMES[board.frame]):
+    harbor = board.harbors[slot]
+```
+
+## 8. Augmenting one game x12
 
 A recorded game is a board plus a list of actions (and the RNG state after the board was dealt). To get the 12 equivalent games:
 
@@ -156,7 +234,7 @@ Why the same RNG state reproduces the transformed game: after the board is dealt
 
 Planned next (when the types exist): `transform_state` (Week 2), and observation, action-id and legality-mask transforms (Week 6).
 
-## 8. New concepts
+## 9. New concepts
 
 - **Permutation table.** A symmetry is stored as a list where position `x` holds the id that `x` moves to. Applying it is one lookup; no geometry at runtime.
 - **Composition and inverse.** Doing symmetry `a` and then `b` is again one of the 12 (`table[b][table[a][x]]`), and every symmetry has an inverse that undoes it. Mathematically the 12 form a *group* (the dihedral group of the hexagon, often written D6). You don't need group theory to use the tables; "you can chain them and undo them" is all it means here.
@@ -168,14 +246,14 @@ Planned next (when the types exist): `transform_state` (Week 2), and observation
 - **Harbor frame.** One of the two legal sets of 9 harbor edges (section 4).
 - **Legal board.** A board the generator can deal, seen under any of the 12 symmetries.
 
-## 9. Rules for engine code
+## 10. Rules for engine code
 
 - **Never break a tie or order an outcome by hex, vertex or edge id.** If a rule picks "the first vertex" or iterates ids to decide something, the turned board would play out differently and equivariance breaks. Order by player or by explicit rule instead.
 - **Never use slot ids outside board generation.** Use `vertex_harbors`.
 - **Transform actions together with the board.** Transforming only the board (or only the observation) silently teaches a bot the wrong moves.
 - **Adding a new action kind** means saying how it transforms: `transform_action` lists every action kind explicitly, so mypy fails until you do.
 
-## 10. How it is tested
+## 11. How it is tested
 
 `tests/unit/test_symmetry.py`:
 
