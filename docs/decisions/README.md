@@ -19,6 +19,7 @@ One ADR per decision that is costly to reverse or likely to be questioned. Open 
 | 0013 | Discards after a 7, one card per action        | Accepted | `DiscardOne(resource)` repeated until the player has discarded enough            |
 | 0014 | Trade offers are broadcast (no targeted offers)| Accepted | `Offer(give, want)` goes to all opponents; audience comes with the chat layer    |
 | 0015 | Board symmetries and harbor frames             | Accepted | All 12 rotations/mirrors are legal boards; 2 harbor frames; exact x12 augmentation |
+| 0016 | Seat 0 always starts                           | Accepted | Engine starts with seat 0; server/eval/env shuffle seats every game              |
 
 ## ADR Template
 
