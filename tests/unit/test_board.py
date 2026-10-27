@@ -54,6 +54,37 @@ def test_spiral_runs_counterclockwise() -> None:
     assert t.HEX_POS[path[1]][1] < t.HEX_POS[path[0]][1]
 
 
+def test_spiral_from_north_east_corner_matches_rulebook() -> None:
+    # ADR 0009, verified against the rulebook: counterclockwise from any corner, here NE (h2).
+    path = spiral(1)
+    assert path == (2, 1, 0, 3, 7, 12, 16, 17, 18, 15, 11, 6, 5, 4, 8, 13, 14, 10, 9)
+
+
+def test_spiral_skips_the_desert_without_losing_a_token() -> None:
+    # ADR 0009: the desert gets no token; the next hex on the spiral takes the next letter.
+    # NE corner spiral: h2 h1 h0 h3 h7 h12 h16 h17 h18 h15 h11 h6 h5 h4 h8 h13 h14 h10 h9.
+    from engine.board import _place_tokens
+
+    def tokens_with_desert_at(desert: int) -> tuple[int | None, ...]:
+        terrains = tuple(
+            Terrain.DESERT if h == desert else Terrain.FIELDS for h in range(t.NUM_HEXES)
+        )
+        return _place_tokens(terrains, 1)
+
+    mid = tokens_with_desert_at(4)  # 14th on the spiral
+    assert (mid[5], mid[4], mid[8]) == (9, None, 4)  # M, desert, N
+    assert mid[9] == 11  # R still reaches the centre
+
+    start = tokens_with_desert_at(2)  # desert on the start hex
+    assert (start[2], start[1]) == (None, 5)  # A moves to the second hex
+
+    centre = tokens_with_desert_at(9)  # desert in the centre
+    assert (centre[10], centre[9]) == (11, None)  # R lands just before the centre
+
+    for tokens in (mid, start, centre):
+        assert sorted(x for x in tokens if x is not None) == sorted(TOKEN_SEQUENCE)
+
+
 def test_spiral_starts_differ_per_corner() -> None:
     assert len({spiral(c)[0] for c in range(6)}) == 6
 
