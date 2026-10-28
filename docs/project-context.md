@@ -73,6 +73,6 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 | 7 | Baseline bots, tournament harness, profiling | Elo ladder runs; steps/sec recorded |
 
 ## Open questions
-- Final project name and license (MIT / Apache-2.0 / GPL).
+- Final project name. (License decided: MIT, for the whole repo.)
 - Exact bounds for the RL trade subset and max negotiation rounds per turn.
 - Board and RNG decisions: drafted as ADRs 0007-0010 (Proposed), to be reviewed in Week 0.

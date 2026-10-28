@@ -15,11 +15,12 @@ Update at the end of every session. Keep it under ~40 lines.
   - `engine/board.py`: beginner + random layouts, A-R spiral tokens, shuffled harbors, `render_board` ASCII printer.
 - ADR 0015: all 12 board symmetries are legal boards. `topology.py` symmetry tables, two harbor frames (`HARBOR_FRAMES` replaces `HARBOR_SLOTS`), `Board.frame`, `vertex_harbors`, `engine/symmetry.py` (`transform_board`, `transform_action`). Docs: `docs/board-symmetry.md`.
 - Token spiral verified against the rulebook: counterclockwise from any outer corner (pinned by `test_spiral_from_north_east_corner_matches_rulebook`). CI green on GitHub.
+- License: MIT for the whole repo (`LICENSE`, `pyproject.toml`).
 - `trade-protocol.md` aligned with the code (action names, `Offer` without proposer, counters from the responder's side).
 
 ## Now (Week 0 wrap-up)
 1. Fill `docs/rules-spec.md` sections 1-3 (in progress). Section 2 blocks Week 2.
-2. Decide license; a MIT `LICENSE` file already exists. Confirm the project name.
+2. Confirm the project name.
 
 ## Planned (do in due time; remind at session start)
 - Review ADRs 0004 and 0006 (status Proposed); 0006 is needed by Week 6.
