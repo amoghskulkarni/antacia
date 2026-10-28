@@ -35,6 +35,23 @@ class Terrain(IntEnum):
     DESERT = 5  # produces nothing
 
 
+def terrain_resource(terrain: Terrain) -> Resource | None:
+    """The resource a terrain produces; None for the desert."""
+    match terrain:
+        case Terrain.HILLS:
+            return Resource.BRICK
+        case Terrain.FOREST:
+            return Resource.LUMBER
+        case Terrain.MOUNTAINS:
+            return Resource.ORE
+        case Terrain.FIELDS:
+            return Resource.GRAIN
+        case Terrain.PASTURE:
+            return Resource.WOOL
+        case Terrain.DESERT:
+            return None
+
+
 class Harbor(IntEnum):
     """Harbor tile type. 2:1 harbors share their value with the matching Resource."""
 

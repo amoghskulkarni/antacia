@@ -4,9 +4,10 @@ import pytest
 
 from engine import topology as t
 from engine.actions import BuildRoad, BuildSettlement, RollDice
+from engine.board import Layout
 from engine.game import IllegalActionError, legal_actions, new_game, step
 from engine.state import GameState
-from engine.types import Phase
+from engine.types import Phase, ResourceCounts
 
 
 def first_settlement(state: GameState) -> BuildSettlement:
@@ -178,3 +179,31 @@ def test_the_second_setup_road_cannot_attach_to_the_first_settlement() -> None:
     for e in t.EDGE_EDGES[first_road_edge]:
         if second.vertex not in t.EDGE_VERTICES[e]:
             assert BuildRoad(e) not in legal_actions(state)
+
+
+def test_the_first_settlement_grants_no_resources() -> None:
+    # rules-spec 2: only the second settlement grants starting resources.
+    state = new_game(seed=1, num_players=3, layout=Layout.BEGINNER)
+    state = place_pair_at(state, 22)
+    assert state.players[0].hand == ResourceCounts()
+
+
+def test_the_second_settlement_grants_one_card_per_adjacent_hex() -> None:
+    # rules-spec 2: one card per hex next to the second settlement. Beginner board:
+    #   v41 fields, pasture, pasture  (same terrain twice gives two cards)
+    #   v23 hills, forest, desert     (the desert gives nothing)
+    #   v0  mountains only            (coastal vertex, one hex)
+    state = new_game(seed=1, num_players=3, layout=Layout.BEGINNER)
+    for vertex in (22, 2, 9):  # first settlements: seats 0, 1, 2
+        state = place_pair_at(state, vertex)
+    assert all(p.hand == ResourceCounts() for p in state.players)
+
+    state = step(state, BuildSettlement(41))  # seat 2
+    assert state.players[2].hand == ResourceCounts(grain=1, wool=2)  # on placement, before the road
+    state = step(state, first_road(state))
+    state = place_pair_at(state, 23)  # seat 1
+    state = place_pair_at(state, 0)  # seat 0
+
+    assert state.players[0].hand == ResourceCounts(ore=1)
+    assert state.players[1].hand == ResourceCounts(brick=1, lumber=1)
+    assert state.players[2].hand == ResourceCounts(grain=1, wool=2)

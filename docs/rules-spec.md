@@ -64,3 +64,4 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 | 2 | Last seat in setup | Places both of its pairs back to back (snake order) | `tests/unit/test_setup.py::test_setup_follows_the_snake_order` |
 | 3 | Distance rule against your own settlement | Applies: no settlement next to any settlement, own included | `tests/unit/test_setup.py::test_the_distance_rule_also_applies_to_your_own_settlements` |
 | 4 | Second setup road next to the first settlement or road | Not allowed: it must touch the settlement just placed (ADR 0011) | `tests/unit/test_setup.py::test_the_second_setup_road_cannot_attach_to_the_first_settlement` |
+| 5 | Second settlement next to the desert, or on the coast | Desert gives nothing; a coastal vertex gives one card per land hex it touches; the same terrain twice gives two cards | `tests/unit/test_setup.py::test_the_second_settlement_grants_one_card_per_adjacent_hex` |

@@ -12,8 +12,8 @@ from dataclasses import replace
 
 from engine import topology as t
 from engine.actions import Action, BuildRoad, BuildSettlement
-from engine.state import GameState
-from engine.types import Phase, PlayerId
+from engine.state import GameState, PlayerState
+from engine.types import Phase, PlayerId, terrain_resource
 
 
 def snake_seat(turn: int, num_players: int) -> PlayerId:
@@ -37,8 +37,15 @@ def apply_setup_action(state: GameState, action: Action) -> GameState:
     seat = state.current_player
     match action:
         case BuildSettlement(vertex=v):
+            turn = t.NUM_VERTICES - state.vertex_owner.count(None)
+            players = state.players
+            if turn >= len(players):  # second round: this is the seat's second settlement
+                players = _replace_at(
+                    players, seat, _with_starting_resources(players[seat], state, v)
+                )
             return replace(
                 state,
+                players=players,
                 vertex_owner=_replace_at(state.vertex_owner, v, seat),
                 pending_road_vertex=v,
             )
@@ -55,6 +62,19 @@ def apply_setup_action(state: GameState, action: Action) -> GameState:
             return replace(state, current_player=snake_seat(turns_done, num_players))
         case _:
             raise AssertionError(f"not a setup action: {action!r}")
+
+
+def _with_starting_resources(player: PlayerState, state: GameState, vertex: int) -> PlayerState:
+    """One card per hex next to `vertex`; the desert gives nothing.
+
+    The bank can't run short here: at most 3 cards per seat, 12 per resource < 19.
+    """
+    hand = player.hand
+    for h in t.VERTEX_HEXES[vertex]:
+        resource = terrain_resource(state.board.terrains[h])
+        if resource is not None:
+            hand = hand.add(resource)
+    return replace(player, hand=hand)
 
 
 def _distance_rule_ok(state: GameState, vertex: int) -> bool:
