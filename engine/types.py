@@ -46,6 +46,13 @@ class Harbor(IntEnum):
     GENERIC = 5  # 3:1, any resource
 
 
+class Phase(IntEnum):
+    """What the game is waiting for. More phases arrive with their rules (Week 3+)."""
+
+    SETUP = 0  # initial placements, snake order (rules-spec 2)
+    PRE_ROLL = 1  # the current player must roll next
+
+
 class DevCard(IntEnum):
     KNIGHT = 0
     VICTORY_POINT = 1
