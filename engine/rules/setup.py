@@ -27,7 +27,9 @@ def setup_actions(state: GameState) -> tuple[Action, ...]:
         return tuple(
             BuildSettlement(v) for v in range(t.NUM_VERTICES) if _distance_rule_ok(state, v)
         )
-    return tuple(BuildRoad(e) for e in range(t.NUM_EDGES) if state.road_owner[e] is None)
+    # Connection rule: the road touches the settlement just placed, not any other piece.
+    edges = t.VERTEX_EDGES[state.pending_road_vertex]
+    return tuple(BuildRoad(e) for e in edges if state.road_owner[e] is None)
 
 
 def apply_setup_action(state: GameState, action: Action) -> GameState:

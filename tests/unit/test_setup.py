@@ -145,3 +145,36 @@ def test_a_settlement_two_edges_away_is_allowed() -> None:
     assert two_away
     for v in two_away:
         assert BuildSettlement(v) in legal_actions(state)
+
+
+def test_the_setup_road_must_touch_the_settlement_just_placed() -> None:
+    # rules-spec 2: connection rule.
+    state = step(new_game(seed=1, num_players=3), BuildSettlement(20))
+    assert set(legal_actions(state)) == {BuildRoad(e) for e in t.VERTEX_EDGES[20]}
+    far_edge = next(e for e in range(t.NUM_EDGES) if 20 not in t.EDGE_VERTICES[e])
+    with pytest.raises(IllegalActionError):
+        step(state, BuildRoad(far_edge))
+
+
+def test_a_coastal_settlement_with_two_edges_offers_two_roads() -> None:
+    state = step(new_game(seed=1, num_players=3), BuildSettlement(0))
+    assert set(legal_actions(state)) == {BuildRoad(0), BuildRoad(1)}
+
+
+def test_the_second_setup_road_cannot_attach_to_the_first_settlement() -> None:
+    # rules-spec 2: in round 2 the road touches the second settlement only (ADR 0011).
+    # Seat 2 of 3 places both pairs in a row, so its first settlement is right there.
+    state = place_pair(place_pair(new_game(seed=1, num_players=3)))
+    state = place_pair_at(state, 20)
+    first_road_edge = state.road_owner.index(2)
+    second = first_settlement(state)
+    state = step(state, second)
+    assert state.current_player == 2
+    assert set(legal_actions(state)) == {
+        BuildRoad(e) for e in t.VERTEX_EDGES[second.vertex] if state.road_owner[e] is None
+    }
+    for e in t.VERTEX_EDGES[20]:
+        assert BuildRoad(e) not in legal_actions(state)
+    for e in t.EDGE_EDGES[first_road_edge]:
+        if second.vertex not in t.EDGE_VERTICES[e]:
+            assert BuildRoad(e) not in legal_actions(state)
