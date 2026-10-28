@@ -2,7 +2,7 @@
 
 Source of truth for the engine. Fill in from your own copy of the official rulebook; this file records *decisions and edge cases*, not the rulebook's prose. Items marked VERIFY are my recollection of the standard rules and must be checked against the rulebook.
 
-## 1. Components (VERIFY counts)
+## 1. Components (VERIFIED)
 - 19 hexes: 4 forest (lumber), 4 pasture (wool), 4 fields (grain), 3 hills (brick), 3 mountains (ore), 1 desert
 - 18 number tokens: 2 and 12 once each; 3, 4, 5, 6, 8, 9, 10, 11 twice each
 - 9 harbors: 4 generic 3:1, 5 resource-specific 2:1
@@ -12,8 +12,11 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 - Setup variability: board layout, token placement, harbor placement, player order
 
 ## 2. Setup phase
-- [ ] Placement order (snake order) and which settlement grants starting resources
-- [ ] Distance rule
+- [x] Placement of settlements and roads - A settlement is placed on a vertex on the board, and a road is placed on the edge of the board
+- [x] Placement order (snake order) - Each player places **a pair of 1 settlement and 1 road** (normal placement rules are to be honored) in the first-to-last (forward) order. Then all players place the second pair of 1 settlement and 1 road, this tie in the last-to-first (reverse) order 
+- [x] Starting resources - Placement of the **second settlement** grants starting resources to each player. 1 resource per adjacent hex to the second settlement is given
+- [x] Road placement rule ("Connection rule") - Road must be placed connected to the settlement (or "owned" vertex). In setup, the road must touch the settlement placed just before it (in round 2, not the first settlement or its road; ADR 0011)
+- [x] Settlement placement rule ("Distance rule") - No two settlements (of any player, including of one's own) can be placed on the same edge. Consequently the same rule applies for the cities, as cities are upgraded settlements placed on the same spot (i.e. when placed, a city just replaces the settlement in question)
 - [x] Beginner vs random layout (decision: both; `random` is the default, see ADR 0009)
 - Encoding: setup placements use `BuildSettlement`/`BuildRoad`; the phase makes them free (ADR 0011)
 
@@ -57,4 +60,4 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 ## 10. Edge cases log (add as you find them)
 | # | Situation | Decision | Test |
 |---|-----------|----------|------|
-| 1 |           |          |      |
+| 1 | Desert on the token spiral | Skipped; the next hex takes the next letter (ADR 0009) | `tests/unit/test_board.py::test_spiral_skips_the_desert_without_losing_a_token` |
