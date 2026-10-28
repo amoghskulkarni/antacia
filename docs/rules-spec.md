@@ -61,3 +61,4 @@ Source of truth for the engine. Fill in from your own copy of the official ruleb
 | # | Situation | Decision | Test |
 |---|-----------|----------|------|
 | 1 | Desert on the token spiral | Skipped; the next hex takes the next letter (ADR 0009) | `tests/unit/test_board.py::test_spiral_skips_the_desert_without_losing_a_token` |
+| 2 | Last seat in setup | Places both of its pairs back to back (snake order) | `tests/unit/test_setup.py::test_setup_follows_the_snake_order` |

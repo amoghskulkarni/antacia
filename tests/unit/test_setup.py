@@ -1,0 +1,114 @@
+"""Setup phase rules (rules-spec 2). States are built through new_game and step only."""
+
+import pytest
+
+from engine import topology as t
+from engine.actions import BuildRoad, BuildSettlement, RollDice
+from engine.game import IllegalActionError, legal_actions, new_game, step
+from engine.state import GameState
+from engine.types import Phase
+
+
+def first_settlement(state: GameState) -> BuildSettlement:
+    return next(a for a in legal_actions(state) if isinstance(a, BuildSettlement))
+
+
+def first_road(state: GameState) -> BuildRoad:
+    return next(a for a in legal_actions(state) if isinstance(a, BuildRoad))
+
+
+def place_pair(state: GameState) -> GameState:
+    """The current player places the lowest-id legal settlement, then the lowest-id road."""
+    state = step(state, first_settlement(state))
+    return step(state, first_road(state))
+
+
+def test_the_first_settlement_may_go_on_any_vertex() -> None:
+    # rules-spec 2: placement; an empty board has no other restriction.
+    state = new_game(seed=1, num_players=4)
+    assert legal_actions(state) == tuple(BuildSettlement(v) for v in range(t.NUM_VERTICES))
+
+
+def test_placing_a_settlement_records_it_and_asks_the_same_player_for_a_road() -> None:
+    # rules-spec 2: each player places a pair, settlement then road.
+    state = step(new_game(seed=1, num_players=4), BuildSettlement(20))
+    assert state.vertex_owner[20] == 0
+    assert state.current_player == 0
+    assert state.pending_road_vertex == 20
+    assert legal_actions(state)
+    assert all(isinstance(a, BuildRoad) for a in legal_actions(state))
+
+
+def test_placing_the_road_records_it_and_passes_to_the_next_seat() -> None:
+    state = step(new_game(seed=1, num_players=4), BuildSettlement(20))
+    road = first_road(state)
+    state = step(state, road)
+    assert state.road_owner[road.edge] == 0
+    assert state.current_player == 1
+    assert state.pending_road_vertex is None
+    assert all(isinstance(a, BuildSettlement) for a in legal_actions(state))
+
+
+@pytest.mark.parametrize(
+    ("num_players", "order"),
+    [(3, [0, 1, 2, 2, 1, 0]), (4, [0, 1, 2, 3, 3, 2, 1, 0])],
+)
+def test_setup_follows_the_snake_order(num_players: int, order: list[int]) -> None:
+    # rules-spec 2: forward for the first pair, reverse for the second; the last seat
+    # places both of its pairs back to back.
+    state = new_game(seed=1, num_players=num_players)
+    seen = []
+    for _ in order:
+        seen.append(state.current_player)
+        state = place_pair(state)
+    assert seen == order
+
+
+@pytest.mark.parametrize("num_players", [3, 4])
+def test_setup_ends_with_two_pairs_each_and_seat_0_to_roll(num_players: int) -> None:
+    # rules-spec 2; ADR 0016: seat 0 starts the first turn.
+    state = new_game(seed=1, num_players=num_players)
+    for _ in range(2 * num_players):
+        state = place_pair(state)
+    assert state.phase is Phase.PRE_ROLL
+    assert state.current_player == 0
+    assert state.pending_road_vertex is None
+    for seat in range(num_players):
+        assert state.vertex_owner.count(seat) == 2
+        assert state.road_owner.count(seat) == 2
+
+
+def test_a_settlement_cannot_go_on_an_occupied_vertex() -> None:
+    state = place_pair(new_game(seed=1, num_players=3))
+    taken = state.vertex_owner.index(0)
+    assert BuildSettlement(taken) not in legal_actions(state)
+    with pytest.raises(IllegalActionError):
+        step(state, BuildSettlement(taken))
+
+
+def test_a_road_cannot_go_on_an_occupied_edge() -> None:
+    state = place_pair(new_game(seed=1, num_players=3))
+    taken = state.road_owner.index(0)
+    state = step(state, first_settlement(state))
+    assert BuildRoad(taken) not in legal_actions(state)
+    with pytest.raises(IllegalActionError):
+        step(state, BuildRoad(taken))
+
+
+def test_step_rejects_the_wrong_kind_of_action() -> None:
+    state = new_game(seed=1, num_players=3)
+    with pytest.raises(IllegalActionError):
+        step(state, BuildRoad(0))  # a settlement must come first
+    with pytest.raises(IllegalActionError):
+        step(state, RollDice())  # no rolling during setup
+    state = step(state, BuildSettlement(20))
+    with pytest.raises(IllegalActionError):
+        step(state, BuildSettlement(40))  # the road must come first
+
+
+def test_step_leaves_the_input_state_unchanged() -> None:
+    # ADR 0002: copy-on-step.
+    before = new_game(seed=1, num_players=3)
+    snapshot = new_game(seed=1, num_players=3)
+    step(before, BuildSettlement(20))
+    assert before == snapshot
