@@ -2,40 +2,29 @@
 
 Update at the end of every session. Keep it under ~40 lines.
 
-**Last updated:** 2026-10-27
-**Phase:** 1 (core engine), Week 0 wrap-up; Week 2 planned (Week 1 board work pulled forward and done)
+**Last updated:** 2026-10-28
+**Phase:** 1 (core engine), Week 2 (setup phase done; equivariance test left)
 
 ## Done
-- Planning, docs, ADRs 0001-0006. Tooling: `pyproject.toml` (uv, Python >=3.14, ruff, mypy strict on `engine/`, pytest, hypothesis), CI workflow (passes locally; not yet run on GitHub).
-- Engine scaffold: API stubs in `engine/game.py`, `types.py` enums, placeholder `GameState`; nested `CLAUDE.md` in `tests/`, `engine/rules/`.
-- Actions: 19 frozen dataclasses in `engine/actions.py`; `ResourceCounts`, `Offer`, board id aliases. Encodings recorded as ADRs 0011-0014 (setup reuses build actions, combined `MoveRobber`, `DiscardOne`, broadcast-only offers).
-- ADRs 0007-0010 Accepted and implemented:
-  - `engine/rng.py`: SplitMix64 (matches reference outputs), `randbelow`, `shuffle`, `roll_dice`.
-  - `engine/topology.py`: axial coordinates, row-major ids (19/54/72), adjacency tables, coast ring, 9 harbor slots; pinned by `tests/conformance/topology.json`.
-  - `engine/board.py`: beginner + random layouts, A-R spiral tokens, shuffled harbors, `render_board` ASCII printer.
-- ADR 0015: all 12 board symmetries are legal boards. `topology.py` symmetry tables, two harbor frames (`HARBOR_FRAMES` replaces `HARBOR_SLOTS`), `Board.frame`, `vertex_harbors`, `engine/symmetry.py` (`transform_board`, `transform_action`). Docs: `docs/board-symmetry.md`.
-- Token spiral verified against the rulebook: counterclockwise from any outer corner (pinned by `test_spiral_from_north_east_corner_matches_rulebook`). CI green on GitHub.
-- License: MIT for the whole repo (`LICENSE`, `pyproject.toml`).
-- `trade-protocol.md` aligned with the code (action names, `Offer` without proposer, counters from the responder's side).
+- Planning, docs, ADRs 0001-0016. Tooling: uv, ruff, mypy strict, pytest, hypothesis; CI green on GitHub. License: MIT.
+- Actions: 19 frozen dataclasses (`engine/actions.py`); encodings in ADRs 0011-0014.
+- Board (ADRs 0007-0010, 0015): SplitMix64 RNG, topology tables, beginner + random layouts with the rulebook spiral (counterclockwise from any corner, verified), ASCII printer, 12 symmetries, `transform_board`/`transform_action`.
+- rules-spec sections 1-2 filled and verified; edge cases 1-5 logged in section 10.
+- Week 2 setup (rules-spec 2): `ResourceCounts` arithmetic, `terrain_resource`, `GameState`/`PlayerState`/`Phase`, `new_game` (3-4 players, seat 0 starts per ADR 0016), setup `legal_actions`/`step` in `engine/rules/setup.py` (snake order, distance rule, connection rule, starting resources, ends in `PRE_ROLL`), `IllegalActionError`. Property tests: random agent completes setup for any seed, 3 and 4 players.
 
-## Now (Week 0 wrap-up)
-1. Fill `docs/rules-spec.md` sections 1-3 (in progress). Section 2 blocks Week 2.
-2. Confirm the project name.
+## Now
+1. `transform_state` + equivariance property test for setup (ADR 0015); then finish Week 2.
+2. Fill rules-spec section 3 (turn structure); section 4-5 before Week 3 coding starts.
+3. Confirm the project name.
 
 ## Planned (do in due time; remind at session start)
 - Review ADRs 0004 and 0006 (status Proposed); 0006 is needed by Week 6.
 - Check the `VERIFY` items in `docs/trade-protocol.md` against the rulebook (needed by Week 5).
 - `docs/workflow.md` is empty: fill it or delete it.
 
-## Next (Week 2: GameState + setup)
-Decided: seat 0 starts and callers shuffle seats (ADR 0016); bank and piece counts are derived, not stored.
-1. `ResourceCounts` arithmetic.
-2. `GameState`/`PlayerState`/`Phase` + `new_game(seed, num_players, layout)`.
-3. Setup `legal_actions`/`step`: snake order, distance rule, road touches the new settlement; `IllegalActionError`.
-4. Starting resources from the second settlement.
-5. End of setup -> `PRE_ROLL`, seat 0.
-6. Property tests: random agent completes setup; determinism.
-7. `transform_state` + equivariance property test (ADR 0015).
+## Next (Week 3: dice, production, building, robber, 7-discard)
+- Adds `robber` (starts on the desert; add to the spec first) and city tracking to `GameState`.
+- Move `_distance_rule_ok` from `rules/setup.py` to `engine/` when normal building needs it.
 
 ## Blocked / open questions
 - Sequential vs sealed trade responses (`trade-protocol.md` section 13).
