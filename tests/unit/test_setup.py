@@ -23,6 +23,12 @@ def place_pair(state: GameState) -> GameState:
     return step(state, first_road(state))
 
 
+def place_pair_at(state: GameState, vertex: int) -> GameState:
+    """The current player places a settlement on `vertex`, then the lowest-id legal road."""
+    state = step(state, BuildSettlement(vertex))
+    return step(state, first_road(state))
+
+
 def test_the_first_settlement_may_go_on_any_vertex() -> None:
     # rules-spec 2: placement; an empty board has no other restriction.
     state = new_game(seed=1, num_players=4)
@@ -112,3 +118,30 @@ def test_step_leaves_the_input_state_unchanged() -> None:
     snapshot = new_game(seed=1, num_players=3)
     step(before, BuildSettlement(20))
     assert before == snapshot
+
+
+def test_a_settlement_cannot_go_next_to_another_players_settlement() -> None:
+    # rules-spec 2: distance rule; no two settlements on the two ends of one edge.
+    state = place_pair_at(new_game(seed=1, num_players=3), 20)
+    for neighbour in t.VERTEX_VERTICES[20]:
+        assert BuildSettlement(neighbour) not in legal_actions(state)
+        with pytest.raises(IllegalActionError):
+            step(state, BuildSettlement(neighbour))
+
+
+def test_the_distance_rule_also_applies_to_your_own_settlements() -> None:
+    # rules-spec 2: "including of one's own". Seat 2 of 3 places both pairs in a row.
+    state = place_pair(place_pair(new_game(seed=1, num_players=3)))
+    state = place_pair_at(state, 20)
+    assert state.current_player == 2
+    for neighbour in t.VERTEX_VERTICES[20]:
+        assert BuildSettlement(neighbour) not in legal_actions(state)
+
+
+def test_a_settlement_two_edges_away_is_allowed() -> None:
+    state = place_pair_at(new_game(seed=1, num_players=3), 20)
+    two_away = {w for n in t.VERTEX_VERTICES[20] for w in t.VERTEX_VERTICES[n]}
+    two_away -= {20, *t.VERTEX_VERTICES[20]}
+    assert two_away
+    for v in two_away:
+        assert BuildSettlement(v) in legal_actions(state)

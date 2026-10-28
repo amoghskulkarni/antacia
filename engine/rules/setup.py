@@ -25,7 +25,7 @@ def setup_actions(state: GameState) -> tuple[Action, ...]:
     """Legal setup placements, in id order."""
     if state.pending_road_vertex is None:
         return tuple(
-            BuildSettlement(v) for v in range(t.NUM_VERTICES) if state.vertex_owner[v] is None
+            BuildSettlement(v) for v in range(t.NUM_VERTICES) if _distance_rule_ok(state, v)
         )
     return tuple(BuildRoad(e) for e in range(t.NUM_EDGES) if state.road_owner[e] is None)
 
@@ -53,6 +53,15 @@ def apply_setup_action(state: GameState, action: Action) -> GameState:
             return replace(state, current_player=snake_seat(turns_done, num_players))
         case _:
             raise AssertionError(f"not a setup action: {action!r}")
+
+
+def _distance_rule_ok(state: GameState, vertex: int) -> bool:
+    """The vertex and all its neighbours are free of settlements (any owner, own included).
+
+    Normal building (rules-spec 5) needs this too; move it to engine/ when it does.
+    """
+    owners = state.vertex_owner
+    return owners[vertex] is None and all(owners[n] is None for n in t.VERTEX_VERTICES[vertex])
 
 
 def _replace_at[T](items: tuple[T, ...], index: int, value: T) -> tuple[T, ...]:
