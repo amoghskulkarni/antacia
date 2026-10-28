@@ -14,7 +14,7 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
   - a web app where humans play with humans and bots in real time, with accounts.
 - Trading is the differentiator. Strong bots today trade badly; I want human-bot and multi-bot trading to feel like a natural over-the-board conversation.
 - Open-source both the gym and the web app so others can train their own bots and pit them against each other.
-- Working name: Antacia (an anagram of "Catan AI"). Branding may differ from Catan, but it must be clear it's the same game.
+- Name: Antacia (final; an anagram of "Catan AI"). Branding may differ from Catan, but it must be clear it's the same game.
 
 ## Tech decisions
 | Area | Decision |
@@ -73,6 +73,6 @@ Distilled from the planning conversation (Oct 2026). Lives at `docs/project-cont
 | 7 | Baseline bots, tournament harness, profiling | Elo ladder runs; steps/sec recorded |
 
 ## Open questions
-- Final project name. (License decided: MIT, for the whole repo.)
+- (Decided: name Antacia; license MIT for the whole repo.)
 - Exact bounds for the RL trade subset and max negotiation rounds per turn.
 - Board and RNG decisions: drafted as ADRs 0007-0010 (Proposed), to be reviewed in Week 0.
