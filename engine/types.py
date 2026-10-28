@@ -64,9 +64,37 @@ class ResourceCounts:
     grain: int = 0
     wool: int = 0
 
+    @staticmethod
+    def uniform(n: int) -> ResourceCounts:
+        """`n` of every resource, e.g. the full bank."""
+        return ResourceCounts(n, n, n, n, n)
+
     def as_tuple(self) -> tuple[int, int, int, int, int]:
         """Counts in `Resource` order."""
         return (self.brick, self.lumber, self.ore, self.grain, self.wool)
+
+    def get(self, resource: Resource) -> int:
+        return self.as_tuple()[resource]
+
+    def add(self, resource: Resource, n: int = 1) -> ResourceCounts:
+        """A copy with `n` more of `resource`."""
+        counts = list(self.as_tuple())
+        counts[resource] += n
+        return ResourceCounts(*counts)
+
+    def total(self) -> int:
+        return sum(self.as_tuple())
+
+    def __add__(self, other: ResourceCounts) -> ResourceCounts:
+        return ResourceCounts(
+            *(a + b for a, b in zip(self.as_tuple(), other.as_tuple(), strict=True))
+        )
+
+    def __sub__(self, other: ResourceCounts) -> ResourceCounts:
+        """Per-resource difference; may go negative (legality is checked by the caller)."""
+        return ResourceCounts(
+            *(a - b for a, b in zip(self.as_tuple(), other.as_tuple(), strict=True))
+        )
 
 
 @dataclass(frozen=True, slots=True)
