@@ -3,18 +3,17 @@
 Update at the end of every session. Keep it under ~40 lines.
 
 **Last updated:** 2026-10-28
-**Phase:** 1 (core engine), Week 2 (setup phase done; equivariance test left)
+**Phase:** 1 (core engine), Week 2 done; Week 3 next
 
 ## Done
 - Planning, docs, ADRs 0001-0016. Tooling: uv, ruff, mypy strict, pytest, hypothesis; CI green on GitHub. Name: Antacia. License: MIT.
 - Actions: 19 frozen dataclasses (`engine/actions.py`); encodings in ADRs 0011-0014.
 - Board (ADRs 0007-0010, 0015): SplitMix64 RNG, topology tables, beginner + random layouts with the rulebook spiral (counterclockwise from any corner, verified), ASCII printer, 12 symmetries, `transform_board`/`transform_action`.
 - rules-spec sections 1-2 filled and verified; edge cases 1-5 logged in section 10.
-- Week 2 setup (rules-spec 2): `ResourceCounts` arithmetic, `terrain_resource`, `GameState`/`PlayerState`/`Phase`, `new_game` (3-4 players, seat 0 starts per ADR 0016), setup `legal_actions`/`step` in `engine/rules/setup.py` (snake order, distance rule, connection rule, starting resources, ends in `PRE_ROLL`), `IllegalActionError`. Property tests: random agent completes setup for any seed, 3 and 4 players.
+- Week 2 setup (rules-spec 2): `ResourceCounts` arithmetic, `terrain_resource`, `GameState`/`PlayerState`/`Phase`, `new_game` (3-4 players, seat 0 starts per ADR 0016), setup `legal_actions`/`step` in `engine/rules/setup.py` (snake order, distance rule, connection rule, starting resources, ends in `PRE_ROLL`), `IllegalActionError`. Property tests: random agent completes setup for any seed, 3 and 4 players. `transform_state` + equivariance tests (ADR 0015) for all 12 symmetries.
 
 ## Now
-1. `transform_state` + equivariance property test for setup (ADR 0015); then finish Week 2.
-2. Fill rules-spec section 3 (turn structure); section 4-5 before Week 3 coding starts.
+1. Fill rules-spec section 3 (turn structure); section 4-5 before Week 3 coding starts.
 
 ## Planned (do in due time; remind at session start)
 - Review ADRs 0004 and 0006 (status Proposed); 0006 is needed by Week 6.
