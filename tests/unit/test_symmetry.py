@@ -15,8 +15,10 @@ from engine.actions import (
     ProposeTrade,
 )
 from engine.board import Layout, generate_board, vertex_harbors
+from engine.game import legal_actions, new_game, step
 from engine.rng import seed_rng
-from engine.symmetry import transform_action, transform_board
+from engine.state import GameState
+from engine.symmetry import transform_action, transform_board, transform_state
 from engine.types import Harbor, Offer, Resource, ResourceCounts
 
 SYMS = range(t.NUM_SYMMETRIES)
@@ -192,6 +194,53 @@ def test_transform_action_inverse_round_trips(s: int) -> None:
         assert dataclasses.is_dataclass(image)
 
 
+# --- Game states ------------------------------------------------------------
+
+# Every GameState field, sorted by whether a symmetry relabels it. Adding a field
+# fails test_every_game_state_field_is_classified until it is listed here and
+# transform_state handles it.
+MOVED_FIELDS = {"board", "vertex_owner", "road_owner", "pending_road_vertex"}
+UNMOVED_FIELDS = {"rng", "phase", "current_player", "players"}
+
+
+def _mid_setup_state() -> GameState:
+    """Seat 0 has a settlement and road on the board; seat 1 has just placed a settlement."""
+    state = step(new_game(seed=3, num_players=3), BuildSettlement(20))
+    state = step(state, legal_actions(state)[0])
+    return step(state, BuildSettlement(40))
+
+
+def test_every_game_state_field_is_classified() -> None:
+    fields = {f.name for f in dataclasses.fields(GameState)}
+    assert fields == MOVED_FIELDS | UNMOVED_FIELDS
+    assert not MOVED_FIELDS & UNMOVED_FIELDS
+
+
+@pytest.mark.parametrize("s", SYMS)
+def test_transform_state_moves_pieces_with_the_board(s: int) -> None:
+    state = _mid_setup_state()
+    image = transform_state(state, s)
+    assert image.board == transform_board(state.board, s)
+    for v in range(t.NUM_VERTICES):
+        assert image.vertex_owner[t.VERTEX_SYMMETRIES[s][v]] == state.vertex_owner[v]
+    for e in range(t.NUM_EDGES):
+        assert image.road_owner[t.EDGE_SYMMETRIES[s][e]] == state.road_owner[e]
+    assert image.pending_road_vertex == t.VERTEX_SYMMETRIES[s][40]
+    for name in UNMOVED_FIELDS:
+        assert getattr(image, name) == getattr(state, name), name
+
+
+def test_transform_state_keeps_an_empty_pending_road() -> None:
+    state = new_game(seed=3, num_players=3)
+    assert transform_state(state, 5).pending_road_vertex is None
+
+
+@pytest.mark.parametrize("s", SYMS)
+def test_transform_state_inverse_round_trips(s: int) -> None:
+    state = _mid_setup_state()
+    assert transform_state(transform_state(state, s), t.INVERSE_SYMMETRY[s]) == state
+
+
 # --- Invalid symmetry indices -----------------------------------------------
 
 BAD_SYMMETRIES = [-1, -12, 12, 13, 100]
@@ -208,6 +257,8 @@ def test_out_of_range_symmetry_is_rejected_everywhere(s: int) -> None:
     for action in (BuildRoad(edge=3), MoveRobber(hex=4, victim=None), EndTurn()):
         with pytest.raises(ValueError, match=str(s)):
             transform_action(action, s)
+    with pytest.raises(ValueError, match=str(s)):
+        transform_state(new_game(seed=0, num_players=3), s)
 
 
 @pytest.mark.parametrize("s", [0.0, 1.5, "3", None])
@@ -217,6 +268,8 @@ def test_non_integer_symmetry_is_rejected(s: object) -> None:
         transform_board(board, s)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         transform_action(EndTurn(), s)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        transform_state(new_game(seed=0, num_players=3), s)  # type: ignore[arg-type]
 
 
 def test_every_valid_symmetry_is_still_accepted() -> None:

@@ -3,8 +3,10 @@ from hypothesis import strategies as st
 
 from engine import topology as t
 from engine.board import Layout, generate_board, red_numbers_adjacent, vertex_harbors
+from engine.game import legal_actions, new_game, step
 from engine.rng import seed_rng
-from engine.symmetry import transform_board
+from engine.symmetry import transform_action, transform_board, transform_state
+from engine.types import Phase
 
 seeds = st.integers(min_value=0, max_value=2**64 - 1)
 syms = st.integers(min_value=0, max_value=t.NUM_SYMMETRIES - 1)
@@ -48,3 +50,36 @@ def test_transforming_twice_is_transforming_by_the_composition(seed: int, a: int
         )
     )
     assert transform_board(transform_board(board, a), b) == transform_board(board, composed)
+
+
+# --- Equivariance of the rules (ADR 0015) -----------------------------------
+# Turning or mirroring the board must give the same game: the transformed state
+# offers exactly the transformed actions, and stepping commutes with the symmetry.
+
+player_counts = st.sampled_from([3, 4])
+
+
+@given(st.data(), seeds, player_counts, syms)
+def test_setup_legal_actions_are_equivariant(
+    data: st.DataObject, seed: int, num_players: int, s: int
+) -> None:
+    state = new_game(seed=seed, num_players=num_players)
+    while state.phase is Phase.SETUP:
+        legal = legal_actions(state)
+        image = transform_state(state, s)
+        assert set(legal_actions(image)) == {transform_action(a, s) for a in legal}
+        state = step(state, data.draw(st.sampled_from(legal)))
+
+
+@given(st.data(), seeds, player_counts, syms)
+def test_setup_step_commutes_with_every_symmetry(
+    data: st.DataObject, seed: int, num_players: int, s: int
+) -> None:
+    state = new_game(seed=seed, num_players=num_players)
+    while state.phase is Phase.SETUP:
+        action = data.draw(st.sampled_from(legal_actions(state)))
+        after = step(state, action)
+        assert step(transform_state(state, s), transform_action(action, s)) == transform_state(
+            after, s
+        )
+        state = after

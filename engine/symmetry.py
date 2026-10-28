@@ -10,9 +10,16 @@ recorded game into 12 equivalent training games:
         actions_s = [transform_action(a, s) for a in actions]
 
 Only board locations move. Players, resources, dice and cards never do.
-GameState and observation transforms follow when those types exist (Week 2, 6).
+`transform_state` does the same for a whole GameState; the rules are equivariant
+(tests/property/test_symmetry_properties.py):
+
+    step(transform_state(state, s), transform_action(a, s))
+        == transform_state(step(state, a), s)
+
+Observation transforms follow in Week 6.
 """
 
+from dataclasses import replace
 from typing import assert_never
 
 from engine import topology as t
@@ -39,7 +46,8 @@ from engine.actions import (
     RollDice,
 )
 from engine.board import Board
-from engine.types import Harbor, Terrain
+from engine.state import GameState
+from engine.types import Harbor, PlayerId, Terrain, VertexId
 
 
 def transform_board(board: Board, s: int) -> Board:
@@ -64,6 +72,33 @@ def transform_board(board: Board, s: int) -> Board:
         harbors[slot] = board.harbors[i]
     (frame,) = frames
     return Board(tuple(terrains), tuple(tokens), tuple(harbors), frame=frame)
+
+
+def transform_state(state: GameState, s: int) -> GameState:
+    """The same game position under symmetry `s`: the board and every piece on it move.
+
+    Seats, hands, phase and the RNG stay the same. When GameState gains a field,
+    decide here whether it moves (tests/unit/test_symmetry.py lists every field).
+    Raises ValueError unless `s` is an int in 0..11.
+    """
+    vertices = t.VERTEX_SYMMETRIES[t.check_symmetry(s)]
+    edges = t.EDGE_SYMMETRIES[s]
+    vertex_owner: list[PlayerId | None] = [None] * t.NUM_VERTICES
+    for v in range(t.NUM_VERTICES):
+        vertex_owner[vertices[v]] = state.vertex_owner[v]
+    road_owner: list[PlayerId | None] = [None] * t.NUM_EDGES
+    for e in range(t.NUM_EDGES):
+        road_owner[edges[e]] = state.road_owner[e]
+    pending: VertexId | None = state.pending_road_vertex
+    if pending is not None:
+        pending = vertices[pending]
+    return replace(
+        state,
+        board=transform_board(state.board, s),
+        vertex_owner=tuple(vertex_owner),
+        road_owner=tuple(road_owner),
+        pending_road_vertex=pending,
+    )
 
 
 def transform_action(action: Action, s: int) -> Action:
